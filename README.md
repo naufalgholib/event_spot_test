@@ -31,7 +31,7 @@ Event Spot is a comprehensive Flutter application for event discovery and manage
 1. Clone the repository:
    ```bash
    git clone https://github.com/naufalgholib/event_spot.git
-   cd event_spot
+   cd event_spot_test
    ```
 
 2. Install dependencies:
