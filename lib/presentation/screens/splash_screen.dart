@@ -4,7 +4,9 @@ import '../../core/config/app_router.dart';
 import '../../core/constants/app_constants.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final bool onboardingComplete;
+
+  const SplashScreen({super.key, required this.onboardingComplete});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -28,14 +30,14 @@ class _SplashScreenState extends State<SplashScreen>
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: Interval(0.0, 0.6, curve: Curves.easeInOut),
+        curve: const Interval(0.0, 0.6, curve: Curves.easeInOut),
       ),
     );
 
     _scaleAnimation = Tween<double>(begin: 0.7, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: Interval(0.3, 1.0, curve: Curves.easeInOut),
+        curve: const Interval(0.3, 1.0, curve: Curves.easeInOut),
       ),
     );
 
@@ -43,9 +45,15 @@ class _SplashScreenState extends State<SplashScreen>
 
     // Navigate to onboarding or home screen after a delay
     Timer(const Duration(seconds: 3), () {
-      // TODO: Check if user is already logged in, then navigate accordingly
-      // For now, navigate to onboarding
-      Navigator.pushReplacementNamed(context, AppRouter.onboarding);
+      if (mounted) {
+        print(
+          'Navigating to: ${widget.onboardingComplete ? "HOME" : "ONBOARDING"}',
+        ); // Debug print
+        Navigator.pushReplacementNamed(
+          context,
+          widget.onboardingComplete ? AppRouter.home : AppRouter.onboarding,
+        );
+      }
     });
   }
 

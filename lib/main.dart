@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/config/app_router.dart';
+import 'core/constants/app_constants.dart';
+import 'core/providers/auth_provider.dart';
 import 'core/theme/app_theme.dart';
 
 void main() async {
@@ -14,30 +17,45 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
+  // Reset onboarding state for testing
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.remove(AppConstants.onboardingCompleteKey);
+  final bool onboardingComplete =
+      prefs.getBool(AppConstants.onboardingCompleteKey) ?? false;
+
   // TODO: Initialize Firebase
   // await Firebase.initializeApp(
   //   options: DefaultFirebaseOptions.currentPlatform,
   // );
 
-  runApp(const MyApp());
+  runApp(MyApp(onboardingComplete: onboardingComplete));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool onboardingComplete;
+
+  const MyApp({super.key, required this.onboardingComplete});
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, _) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+      ],
+      child: Consumer2<ThemeProvider, AuthProvider>(
+        builder: (context, themeProvider, authProvider, _) {
           return MaterialApp(
             title: 'Event Spot',
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
             debugShowCheckedModeBanner: false,
-            onGenerateRoute: AppRouter.generateRoute,
+            onGenerateRoute:
+                (settings) => AppRouter.generateRoute(
+                  settings,
+                  onboardingComplete: onboardingComplete,
+                ),
             initialRoute: AppRouter.root,
           );
         },

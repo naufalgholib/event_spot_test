@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/config/app_router.dart';
 import '../../core/config/app_constants.dart';
+import '../../core/providers/auth_provider.dart';
 import '../../data/models/event_model.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/mock_event_repository.dart';
 import '../../data/repositories/mock_user_repository.dart';
 import '../widgets/common_widgets.dart';
 import 'event_search_screen.dart';
+import 'user_profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,13 +23,10 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   final TextEditingController _searchController = TextEditingController();
-
   final MockEventRepository _eventRepository = MockEventRepository();
-  final MockUserRepository _userRepository = MockUserRepository();
 
   List<EventModel>? _events;
   List<String>? _categories;
-  UserModel? _currentUser;
   bool _isLoading = true;
   String? _error;
 
@@ -51,13 +51,11 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final events = await _eventRepository.getEvents();
       final categories = await _eventRepository.getCategoryNames();
-      final currentUser = await _userRepository.getCurrentUser();
 
       if (mounted) {
         setState(() {
           _events = events;
           _categories = categories;
-          _currentUser = currentUser;
           _isLoading = false;
         });
       }
@@ -101,8 +99,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final currentUser = authProvider.currentUser;
+
     return Scaffold(
-      drawer: _buildDrawer(),
+      drawer: _buildDrawer(currentUser),
       body: _buildBody(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
@@ -118,7 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildDrawer() {
+  Widget _buildDrawer(UserModel? currentUser) {
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -133,26 +134,26 @@ class _HomeScreenState extends State<HomeScreen> {
                 CircleAvatar(
                   radius: 30,
                   backgroundImage:
-                      _currentUser?.profilePicture != null
-                          ? NetworkImage(_currentUser!.profilePicture!)
+                      currentUser?.profilePicture != null
+                          ? NetworkImage(currentUser!.profilePicture!)
                           : null,
                   child:
-                      _currentUser?.profilePicture == null
+                      currentUser?.profilePicture == null
                           ? Icon(Icons.person, size: 30, color: Colors.white)
                           : null,
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  _currentUser?.name ?? 'Guest User',
+                  currentUser?.name ?? 'Guest User',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                if (_currentUser?.email != null)
+                if (currentUser?.email != null)
                   Text(
-                    _currentUser!.email,
+                    currentUser!.email,
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.8),
                       fontSize: 14,
@@ -161,76 +162,98 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          ListTile(
-            leading: const Icon(Icons.person),
-            title: const Text('My Profile'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, AppRouter.userProfile);
-            },
-          ),
-          if (_currentUser?.userType == 'promotor')
+          if (currentUser != null) ...[
             ListTile(
-              leading: const Icon(Icons.dashboard),
-              title: const Text('Promoter Dashboard'),
+              leading: const Icon(Icons.person),
+              title: const Text('My Profile'),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, AppRouter.promoterDashboard);
+                Navigator.pushNamed(context, AppRouter.userProfile);
               },
             ),
-          if (_currentUser?.userType == 'admin')
+            if (currentUser.userType == 'promotor')
+              ListTile(
+                leading: const Icon(Icons.dashboard),
+                title: const Text('Promoter Dashboard'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRouter.promoterDashboard);
+                },
+              ),
+            if (currentUser.userType == 'admin')
+              ListTile(
+                leading: const Icon(Icons.admin_panel_settings),
+                title: const Text('Admin Dashboard'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRouter.adminDashboard);
+                },
+              ),
+            const Divider(),
             ListTile(
-              leading: const Icon(Icons.admin_panel_settings),
-              title: const Text('Admin Dashboard'),
+              leading: const Icon(Icons.event),
+              title: const Text('My Events'),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, AppRouter.adminDashboard);
+                Navigator.pushNamed(context, AppRouter.userEvents);
               },
             ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.event),
-            title: const Text('My Events'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, AppRouter.userEvents);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.bookmark),
-            title: const Text('Bookmarked Events'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, AppRouter.bookmarkedEvents);
-            },
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text('Settings'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, AppRouter.userSettings);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.info),
-            title: const Text('About'),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, AppRouter.about);
-            },
-          ),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Logout'),
-            onTap: () async {
-              Navigator.pop(context);
-              await _userRepository.logout();
-              Navigator.pushReplacementNamed(context, AppRouter.login);
-            },
-          ),
+            ListTile(
+              leading: const Icon(Icons.bookmark),
+              title: const Text('Bookmarked Events'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, AppRouter.bookmarkedEvents);
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text('Settings'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, AppRouter.userSettings);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.info),
+              title: const Text('About'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, AppRouter.about);
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
+              onTap: () async {
+                Navigator.pop(context);
+                final authProvider = Provider.of<AuthProvider>(
+                  context,
+                  listen: false,
+                );
+                await authProvider.logout();
+              },
+            ),
+          ] else ...[
+            ListTile(
+              leading: const Icon(Icons.login),
+              title: const Text('Login'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, AppRouter.login);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.person_add),
+              title: const Text('Register'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, AppRouter.register);
+              },
+            ),
+          ],
         ],
       ),
     );
@@ -252,6 +275,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHomeTab() {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final currentUser = authProvider.currentUser;
+
     return SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -274,7 +300,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Hello, ${_currentUser?.name?.split(' ').first ?? 'User'}',
+                        'Hello, ${currentUser?.name?.split(' ').first ?? 'User'}',
                         style: TextStyle(fontSize: 16),
                       ),
                       const SizedBox(height: 4),
@@ -458,12 +484,33 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildProfileTab() {
-    // Navigate to user profile screen
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Navigator.pushReplacementNamed(context, AppRouter.userProfile);
-    });
+    final authProvider = Provider.of<AuthProvider>(context);
+    final currentUser = authProvider.currentUser;
 
-    return const Center(child: CircularProgressIndicator());
+    if (currentUser == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.person_outline, size: 64),
+            const SizedBox(height: 16),
+            const Text(
+              'Please login to view your profile',
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, AppRouter.login);
+              },
+              child: const Text('Login'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return const UserProfileScreen();
   }
 }
 

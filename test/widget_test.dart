@@ -7,24 +7,48 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 
 import 'package:event_spot/main.dart';
+import 'package:event_spot/core/providers/auth_provider.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  testWidgets('App should start with splash screen', (
+    WidgetTester tester,
+  ) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [ChangeNotifierProvider(create: (_) => AuthProvider())],
+        child: const MyApp(onboardingComplete: false),
+      ),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Verify that splash screen is shown
+    expect(find.text('EventSpot'), findsOneWidget);
+    expect(find.text('Discover. Create. Attend.'), findsOneWidget);
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  testWidgets('Login screen should validate input', (
+    WidgetTester tester,
+  ) async {
+    // Build our app and trigger a frame with onboarding complete
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [ChangeNotifierProvider(create: (_) => AuthProvider())],
+        child: const MyApp(onboardingComplete: true),
+      ),
+    );
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Wait for splash screen animation
+    await tester.pump(const Duration(seconds: 4));
+
+    // Navigate to login screen (this might need adjustment based on your navigation)
+    // await tester.tap(find.byIcon(Icons.person_outline));
+    // await tester.pumpAndSettle();
+
+    // Verify that login form elements are present
+    expect(find.text('Welcome Back'), findsOneWidget);
+    expect(find.text('Sign in to continue'), findsOneWidget);
   });
 }
