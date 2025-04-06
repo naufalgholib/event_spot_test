@@ -8,6 +8,7 @@ import '../../data/models/user_model.dart';
 import '../../data/repositories/mock_event_repository.dart';
 import '../../data/repositories/mock_user_repository.dart';
 import '../widgets/common_widgets.dart';
+import 'event_search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -410,12 +411,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildExploreTab() {
-    // Navigate to the event search screen instead of showing placeholder
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Navigator.pushReplacementNamed(context, AppRouter.searchResults);
-    });
-
-    return const Center(child: CircularProgressIndicator());
+    return EventSearchScreen();
   }
 
   Widget _buildSavedTab() {
