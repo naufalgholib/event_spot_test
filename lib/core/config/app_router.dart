@@ -15,6 +15,11 @@ import '../../presentation/screens/event_search_screen.dart';
 import '../../presentation/screens/bookmarked_events_screen.dart';
 import '../../presentation/screens/user_events_screen.dart';
 import '../../presentation/screens/notifications_screen.dart';
+import '../../presentation/screens/about_faq_screen.dart';
+import '../../presentation/screens/contact_screen.dart';
+import '../../presentation/screens/password_recovery_screen.dart';
+import '../../presentation/screens/user_settings_screen.dart';
+import '../../presentation/screens/subscription_management_screen.dart';
 
 class AppRouter {
   static const String root = '/';
@@ -56,6 +61,9 @@ class AppRouter {
   static const String promoterProfile = '/promoter-profile';
   static const String about = '/about';
   static const String contact = '/contact';
+  static const String aboutFAQ = '/about-faq';
+  static const String passwordRecovery = '/password-recovery';
+  static const String subscriptionManagement = '/subscription-management';
 
   static Route<dynamic> generateRoute(
     RouteSettings settings, {
@@ -156,7 +164,7 @@ class AppRouter {
           case register:
             return const RegisterScreen();
           case forgotPassword:
-            return const Placeholder(); // Replace with ForgotPasswordScreen
+            return const PasswordRecoveryScreen();
           case onboarding:
             return const OnboardingScreen();
           case home:
@@ -229,6 +237,21 @@ class AppRouter {
               initialQuery: query,
               categoryId: categoryId,
             );
+
+          case aboutFAQ:
+            return const AboutFAQScreen();
+
+          case contact:
+            return const ContactScreen();
+
+          case passwordRecovery:
+            return const PasswordRecoveryScreen();
+
+          case userSettings:
+            return const UserSettingsScreen();
+
+          case subscriptionManagement:
+            return const SubscriptionManagementScreen();
 
           // Add other routes as needed
 

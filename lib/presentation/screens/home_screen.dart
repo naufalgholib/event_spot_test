@@ -206,6 +206,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.pushNamed(context, AppRouter.bookmarkedEvents);
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.subscriptions),
+              title: const Text('My Subscriptions'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, AppRouter.subscriptionManagement);
+              },
+            ),
             const Divider(),
             ListTile(
               leading: const Icon(Icons.settings),
@@ -220,10 +228,17 @@ class _HomeScreenState extends State<HomeScreen> {
               title: const Text('About'),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.pushNamed(context, AppRouter.about);
+                Navigator.pushNamed(context, AppRouter.aboutFAQ);
               },
             ),
-            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.contact_mail),
+              title: const Text('Contact Us'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, AppRouter.contact);
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
@@ -251,6 +266,23 @@ class _HomeScreenState extends State<HomeScreen> {
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushNamed(context, AppRouter.register);
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.info),
+              title: const Text('About'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, AppRouter.aboutFAQ);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.contact_mail),
+              title: const Text('Contact Us'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, AppRouter.contact);
               },
             ),
           ],

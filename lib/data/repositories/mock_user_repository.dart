@@ -1,9 +1,35 @@
 import '../../core/constants/app_constants.dart';
 import '../../data/models/user_model.dart';
+import '../models/follower_model.dart';
 
 class MockUserRepository {
   // Mock current user
   UserModel? _currentUser;
+
+  // Mock followers list
+  final List<FollowerModel> _followers = [
+    // User ID 3 (Mike Johnson) follows promoter ID 2 (Jane Smith)
+    FollowerModel(
+      id: 1,
+      userId: 3,
+      promoterId: 2,
+      createdAt: DateTime.now().subtract(const Duration(days: 30)),
+    ),
+    // User ID 3 (Mike Johnson) follows promoter ID 4 (Sarah Williams)
+    FollowerModel(
+      id: 2,
+      userId: 3,
+      promoterId: 4,
+      createdAt: DateTime.now().subtract(const Duration(days: 15)),
+    ),
+    // User ID 5 (Alex Brown) follows promoter ID 2 (Jane Smith)
+    FollowerModel(
+      id: 3,
+      userId: 5,
+      promoterId: 2,
+      createdAt: DateTime.now().subtract(const Duration(days: 10)),
+    ),
+  ];
 
   // Mock users with passwords
   final List<Map<String, dynamic>> _usersWithAuth = [
@@ -290,5 +316,75 @@ class MockUserRepository {
       return updatedUser;
     }
     throw Exception('Promoter not found');
+  }
+
+  // Get all promoters that a user is following
+  Future<List<UserModel>> getFollowedPromoters(int userId) async {
+    await Future.delayed(const Duration(milliseconds: 800));
+    final promoterIds =
+        _followers
+            .where((follower) => follower.userId == userId)
+            .map((follower) => follower.promoterId)
+            .toList();
+
+    return _users
+        .where(
+          (user) =>
+              user.userType == 'promotor' && promoterIds.contains(user.id),
+        )
+        .toList();
+  }
+
+  // Check if a user is following a promoter
+  Future<bool> isFollowingPromoter(int userId, int promoterId) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    return _followers.any(
+      (follower) =>
+          follower.userId == userId && follower.promoterId == promoterId,
+    );
+  }
+
+  // Follow a promoter
+  Future<bool> followPromoter(int userId, int promoterId) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    // Check if already following
+    if (await isFollowingPromoter(userId, promoterId)) {
+      return true;
+    }
+
+    // Check if promoter exists and is actually a promoter
+    final promoter = _users.firstWhere(
+      (user) => user.id == promoterId && user.userType == 'promotor',
+      orElse: () => throw Exception('Promoter not found'),
+    );
+
+    // Add to followers
+    final newFollower = FollowerModel(
+      id: _followers.length + 1,
+      userId: userId,
+      promoterId: promoterId,
+      createdAt: DateTime.now(),
+    );
+
+    _followers.add(newFollower);
+    return true;
+  }
+
+  // Unfollow a promoter
+  Future<bool> unfollowPromoter(int userId, int promoterId) async {
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    final index = _followers.indexWhere(
+      (follower) =>
+          follower.userId == userId && follower.promoterId == promoterId,
+    );
+
+    if (index != -1) {
+      _followers.removeAt(index);
+      return true;
+    }
+
+    return false;
   }
 }
