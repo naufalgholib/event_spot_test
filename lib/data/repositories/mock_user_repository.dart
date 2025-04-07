@@ -138,16 +138,14 @@ class MockUserRepository {
       if (password.length >= 6) {
         final userWithAuth = _usersWithAuth.firstWhere(
           (data) => (data['user'] as UserModel).email == email,
+          orElse: () => {'user': null, 'password': null},
         );
 
-        // For strict password checking (optional)
-        // if (userWithAuth['password'] != password) {
-        //   return null;
-        // }
-
-        final user = userWithAuth['user'] as UserModel;
-        _currentUser = user;
-        return user;
+        if (userWithAuth['user'] != null) {
+          final user = userWithAuth['user'] as UserModel;
+          _currentUser = user;
+          return user;
+        }
       }
       return null;
     } catch (e) {

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/gestures.dart';
 
 import '../../core/config/app_router.dart';
 import '../../core/constants/app_constants.dart';
-import '../../data/repositories/mock_user_repository.dart';
+import '../../core/providers/auth_provider.dart';
 import '../widgets/common_widgets.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -22,8 +23,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _isPasswordVisible = false;
   bool _rememberMe = false;
-
-  final _userRepository = MockUserRepository();
 
   @override
   void dispose() {
@@ -69,12 +68,10 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final user = await _userRepository.login(
-        _emailController.text,
-        _passwordController.text,
-      );
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.login(_emailController.text, _passwordController.text);
 
-      if (user != null) {
+      if (authProvider.currentUser != null) {
         // Save login state if remember me is checked
         if (_rememberMe) {
           final preferences = await SharedPreferences.getInstance();
@@ -87,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+            const SnackBar(
               content: Text('Invalid email or password'),
               backgroundColor: Colors.red,
             ),
@@ -97,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('An error occurred. Please try again.'),
             backgroundColor: Colors.red,
           ),

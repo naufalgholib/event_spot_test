@@ -68,9 +68,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     final preferences = await SharedPreferences.getInstance();
     await preferences.setBool(AppConstants.onboardingCompleteKey, true);
 
-    // Navigate to login screen
+    // Navigate to home screen
     if (mounted) {
-      Navigator.pushReplacementNamed(context, AppRouter.login);
+      Navigator.pushReplacementNamed(context, AppRouter.home);
     }
   }
 

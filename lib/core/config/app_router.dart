@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../core/providers/auth_provider.dart';
 
 import '../../presentation/screens/splash_screen.dart';
 import '../../presentation/screens/onboarding_screen.dart';
@@ -55,132 +57,189 @@ class AppRouter {
   static const String about = '/about';
   static const String contact = '/contact';
 
-  static Route<dynamic> generateRoute(RouteSettings settings) {
+  static Route<dynamic> generateRoute(
+    RouteSettings settings, {
+    bool? onboardingComplete,
+  }) {
     // Extract route arguments if provided
     final args = settings.arguments;
 
-    switch (settings.name) {
-      case root:
-        return MaterialPageRoute(builder: (_) => const SplashScreen());
-      case login:
-        return MaterialPageRoute(builder: (_) => const LoginScreen());
-      case register:
-        return MaterialPageRoute(builder: (_) => const RegisterScreen());
-      case forgotPassword:
-        return MaterialPageRoute(
-          builder:
-              (_) => const Placeholder(), // Replace with ForgotPasswordScreen
-        );
-      case onboarding:
-        return MaterialPageRoute(builder: (_) => const OnboardingScreen());
-      case home:
-        return MaterialPageRoute(builder: (_) => const HomeScreen());
-      case eventDetail:
-        if (args is int) {
-          return MaterialPageRoute(
-            builder: (_) => EventDetailScreen(eventId: args),
-          );
-        } else if (args is String) {
-          return MaterialPageRoute(
-            builder: (_) => EventDetailScreen(eventSlug: args),
-          );
-        } else if (args is Map<String, dynamic>) {
-          final eventId = args['eventId'] as int?;
-          final eventSlug = args['eventSlug'] as String?;
+    // Protected routes that require authentication
+    final protectedRoutes = {
+      userProfile,
+      userSettings,
+      userEvents,
+      bookmarkedEvents,
+      subscriptions,
+      notifications,
+      eventRegistration,
+      payment,
+      ticketView,
+    };
 
-          if (eventId != null) {
-            return MaterialPageRoute(
-              builder: (_) => EventDetailScreen(eventId: eventId),
-            );
-          } else if (eventSlug != null) {
-            return MaterialPageRoute(
-              builder: (_) => EventDetailScreen(eventSlug: eventSlug),
+    // Admin only routes
+    final adminRoutes = {
+      adminDashboard,
+      userManagement,
+      promoterVerification,
+      eventModeration,
+      categoryManagement,
+      tagManagement,
+      platformStatistics,
+      systemSettings,
+    };
+
+    // Promoter only routes
+    final promoterRoutes = {
+      promoterDashboard,
+      eventCreation,
+      eventManagement,
+      eventEdit,
+      attendeeManagement,
+      commentManagement,
+      analytics,
+      earningsReport,
+      promoterProfileEdit,
+    };
+
+    return MaterialPageRoute(
+      builder: (context) {
+        // Check authentication for protected routes
+        if (protectedRoutes.contains(settings.name)) {
+          final authProvider = Provider.of<AuthProvider>(
+            context,
+            listen: false,
+          );
+          if (!authProvider.isLoggedIn) {
+            return LoginScreen();
+          }
+        }
+
+        // Check admin access
+        if (adminRoutes.contains(settings.name)) {
+          final authProvider = Provider.of<AuthProvider>(
+            context,
+            listen: false,
+          );
+          if (!authProvider.hasRole('admin')) {
+            return Scaffold(
+              body: Center(
+                child: Text('Access denied. Admin privileges required.'),
+              ),
             );
           }
         }
 
-        return MaterialPageRoute(
-          builder:
-              (_) => const Scaffold(
-                body: Center(child: Text('Invalid event details')),
-              ),
-        );
-
-      case promoterProfile:
-        if (args is int) {
-          return MaterialPageRoute(
-            builder: (_) => PromoterProfileScreen(promoterId: args),
+        // Check promoter access
+        if (promoterRoutes.contains(settings.name)) {
+          final authProvider = Provider.of<AuthProvider>(
+            context,
+            listen: false,
           );
-        }
-        return MaterialPageRoute(
-          builder:
-              (_) => const Scaffold(
-                body: Center(child: Text('Invalid promoter ID')),
+          if (!authProvider.hasRole('promotor')) {
+            return Scaffold(
+              body: Center(
+                child: Text('Access denied. Promoter privileges required.'),
               ),
-        );
-
-      case payment:
-        if (args is Map<String, dynamic>) {
-          final event = args['event'];
-          final registration = args['registration'];
-          if (event != null && registration != null) {
-            return MaterialPageRoute(
-              builder:
-                  (_) =>
-                      PaymentScreen(event: event, registration: registration),
             );
           }
         }
-        return MaterialPageRoute(
-          builder:
-              (_) => const Scaffold(
-                body: Center(child: Text('Invalid payment details')),
+
+        // Route specific logic
+        switch (settings.name) {
+          case root:
+            return SplashScreen(
+              onboardingComplete: onboardingComplete ?? false,
+            );
+          case login:
+            return const LoginScreen();
+          case register:
+            return const RegisterScreen();
+          case forgotPassword:
+            return const Placeholder(); // Replace with ForgotPasswordScreen
+          case onboarding:
+            return const OnboardingScreen();
+          case home:
+            return const HomeScreen();
+          case eventDetail:
+            if (args is int) {
+              return EventDetailScreen(eventId: args);
+            } else if (args is String) {
+              return EventDetailScreen(eventSlug: args);
+            } else if (args is Map<String, dynamic>) {
+              final eventId = args['eventId'] as int?;
+              final eventSlug = args['eventSlug'] as String?;
+
+              if (eventId != null) {
+                return EventDetailScreen(eventId: eventId);
+              } else if (eventSlug != null) {
+                return EventDetailScreen(eventSlug: eventSlug);
+              }
+            }
+
+            return const Scaffold(
+              body: Center(child: Text('Invalid event details')),
+            );
+
+          case promoterProfile:
+            if (args is int) {
+              return PromoterProfileScreen(promoterId: args);
+            }
+            return const Scaffold(
+              body: Center(child: Text('Invalid promoter ID')),
+            );
+
+          case payment:
+            if (args is Map<String, dynamic>) {
+              final event = args['event'];
+              final registration = args['registration'];
+              if (event != null && registration != null) {
+                return PaymentScreen(event: event, registration: registration);
+              }
+            }
+            return const Scaffold(
+              body: Center(child: Text('Invalid payment details')),
+            );
+
+          case userProfile:
+            return const UserProfileScreen();
+
+          case bookmarkedEvents:
+            return const BookmarkedEventsScreen();
+
+          case userEvents:
+            return const UserEventsScreen();
+
+          case notifications:
+            return const NotificationsScreen();
+
+          case searchResults:
+            final query =
+                args is String
+                    ? args
+                    : args is Map<String, dynamic>
+                    ? args['query'] as String?
+                    : null;
+            final categoryId =
+                args is Map<String, dynamic>
+                    ? args['categoryId'] as int?
+                    : null;
+
+            return EventSearchScreen(
+              initialQuery: query,
+              categoryId: categoryId,
+            );
+
+          // Add other routes as needed
+
+          default:
+            return Scaffold(
+              body: Center(
+                child: Text('No route defined for ${settings.name}'),
               ),
-        );
-
-      case userProfile:
-        return MaterialPageRoute(builder: (_) => const UserProfileScreen());
-
-      case bookmarkedEvents:
-        return MaterialPageRoute(
-          builder: (_) => const BookmarkedEventsScreen(),
-        );
-
-      case userEvents:
-        return MaterialPageRoute(builder: (_) => const UserEventsScreen());
-
-      case notifications:
-        return MaterialPageRoute(builder: (_) => const NotificationsScreen());
-
-      case searchResults:
-        final query =
-            args is String
-                ? args
-                : args is Map<String, dynamic>
-                ? args['query'] as String?
-                : null;
-        final categoryId =
-            args is Map<String, dynamic> ? args['categoryId'] as int? : null;
-
-        return MaterialPageRoute(
-          builder:
-              (_) => EventSearchScreen(
-                initialQuery: query,
-                categoryId: categoryId,
-              ),
-        );
-
-      // Add other routes as needed
-
-      default:
-        return MaterialPageRoute(
-          builder:
-              (_) => Scaffold(
-                body: Center(
-                  child: Text('No route defined for ${settings.name}'),
-                ),
-              ),
-        );
-    }
+            );
+        }
+      },
+    );
   }
 }
