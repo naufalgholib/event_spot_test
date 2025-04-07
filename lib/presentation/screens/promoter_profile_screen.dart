@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/config/app_constants.dart';
 import '../../core/config/app_router.dart';
+import '../../core/providers/auth_provider.dart';
 import '../../data/models/user_model.dart';
 import '../../data/models/event_model.dart';
 import '../../data/repositories/mock_user_repository.dart';
@@ -29,6 +31,8 @@ class _PromoterProfileScreenState extends State<PromoterProfileScreen>
   List<EventModel>? _events;
   bool _isLoading = true;
   String? _error;
+  bool _isFollowing = false;
+  bool _isProcessing = false;
 
   @override
   void initState() {
@@ -59,10 +63,23 @@ class _PromoterProfileScreenState extends State<PromoterProfileScreen>
         widget.promoterId,
       );
 
+      // Check if current user is following this promoter
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final currentUser = authProvider.currentUser;
+      bool isFollowing = false;
+
+      if (currentUser != null) {
+        isFollowing = await _userRepository.isFollowingPromoter(
+          currentUser.id,
+          widget.promoterId,
+        );
+      }
+
       if (mounted) {
         setState(() {
           _promoter = promoter;
           _events = events;
+          _isFollowing = isFollowing;
           _isLoading = false;
         });
       }
@@ -71,6 +88,72 @@ class _PromoterProfileScreenState extends State<PromoterProfileScreen>
         setState(() {
           _error = 'Failed to load promoter profile. Please try again.';
           _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _toggleFollow() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final currentUser = authProvider.currentUser;
+
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please login to follow this promoter'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      Navigator.pushNamed(context, AppRouter.login);
+      return;
+    }
+
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      bool success;
+      if (_isFollowing) {
+        success = await _userRepository.unfollowPromoter(
+          currentUser.id,
+          widget.promoterId,
+        );
+      } else {
+        success = await _userRepository.followPromoter(
+          currentUser.id,
+          widget.promoterId,
+        );
+      }
+
+      if (success && mounted) {
+        setState(() {
+          _isFollowing = !_isFollowing;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                _isFollowing
+                    ? 'Now following ${_promoter?.name ?? "promoter"}'
+                    : 'Unfollowed ${_promoter?.name ?? "promoter"}',
+              ),
+              backgroundColor: _isFollowing ? Colors.green : Colors.grey,
+            ),
+          );
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
         });
       }
     }
@@ -166,22 +249,51 @@ class _PromoterProfileScreenState extends State<PromoterProfileScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Company Name or Promoter Name
-                Text(
-                  promoterDetail.companyName ?? _promoter!.name,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                // Company Name or Promoter Name and Follow button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            promoterDetail.companyName ?? _promoter!.name,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
 
-                if (promoterDetail.companyName != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    'by ${_promoter!.name}',
-                    style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-                  ),
-                ],
+                          if (promoterDetail.companyName != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              'by ${_promoter!.name}',
+                              style: TextStyle(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: _isProcessing ? null : _toggleFollow,
+                      icon: Icon(_isFollowing ? Icons.check : Icons.add),
+                      label: Text(_isFollowing ? 'Following' : 'Follow'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            _isFollowing
+                                ? Colors.grey[300]
+                                : theme.colorScheme.primary,
+                        foregroundColor:
+                            _isFollowing
+                                ? theme.colorScheme.onSurface
+                                : theme.colorScheme.onPrimary,
+                      ),
+                    ),
+                  ],
+                ),
 
                 const SizedBox(height: 16),
 
