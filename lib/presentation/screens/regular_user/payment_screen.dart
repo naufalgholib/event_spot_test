@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../core/constants/app_constants.dart';
-import '../../data/models/event_model.dart';
-import '../../data/models/registration_model.dart';
-import '../../data/repositories/mock_registration_repository.dart';
-import '../../data/repositories/mock_user_repository.dart';
-import '../widgets/common_widgets.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../../data/models/event_model.dart';
+import '../../../data/models/registration_model.dart';
+import '../../../data/repositories/mock_registration_repository.dart';
+import '../../../data/repositories/mock_user_repository.dart';
+import '../../widgets/common_widgets.dart';
 
 class PaymentScreen extends StatefulWidget {
   final EventModel event;
@@ -73,22 +73,21 @@ class _PaymentScreenState extends State<PaymentScreen> {
         await showDialog(
           context: context,
           barrierDismissible: false,
-          builder:
-              (context) => AlertDialog(
-                title: const Text('Payment Successful'),
-                content: const Text(
-                  'Your payment has been processed successfully. You will receive a confirmation email shortly.',
-                ),
-                actions: [
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context); // Close dialog
-                      Navigator.pop(context); // Return to event detail
-                    },
-                    child: const Text('OK'),
-                  ),
-                ],
+          builder: (context) => AlertDialog(
+            title: const Text('Payment Successful'),
+            content: const Text(
+              'Your payment has been processed successfully. You will receive a confirmation email shortly.',
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close dialog
+                  Navigator.pop(context); // Return to event detail
+                },
+                child: const Text('OK'),
               ),
+            ],
+          ),
         );
       }
     } catch (e) {
@@ -256,16 +255,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
             SizedBox(
               width: double.infinity,
               child: AppButton(
-                text:
-                    _isProcessing
-                        ? 'Processing...'
-                        : 'Pay ${NumberFormat.currency(symbol: '\$').format(widget.event.price)}',
-                onPressed:
-                    _isProcessing
-                        ? (() {})
-                        : (() {
-                          _processPayment();
-                        }),
+                text: _isProcessing
+                    ? 'Processing...'
+                    : 'Pay ${NumberFormat.currency(symbol: '\$').format(widget.event.price)}',
+                onPressed: _isProcessing
+                    ? (() {})
+                    : (() {
+                        _processPayment();
+                      }),
               ),
             ),
 

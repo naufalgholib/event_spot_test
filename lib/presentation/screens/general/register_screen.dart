@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 
-import '../../core/config/app_router.dart';
-import '../../core/constants/app_constants.dart';
-import '../../data/repositories/mock_user_repository.dart';
-import '../widgets/common_widgets.dart';
+import '../../../core/config/app_router.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../../data/repositories/mock_user_repository.dart';
+import '../../widgets/common_widgets.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -251,11 +251,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   style: TextStyle(
                                     color: theme.colorScheme.primary,
                                   ),
-                                  recognizer:
-                                      TapGestureRecognizer()
-                                        ..onTap = () {
-                                          // TODO: Show terms and conditions
-                                        },
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {
+                                      // TODO: Show terms and conditions
+                                    },
                                 ),
                                 TextSpan(text: ' and '),
                                 TextSpan(
@@ -263,11 +262,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   style: TextStyle(
                                     color: theme.colorScheme.primary,
                                   ),
-                                  recognizer:
-                                      TapGestureRecognizer()
-                                        ..onTap = () {
-                                          // TODO: Show privacy policy
-                                        },
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {
+                                      // TODO: Show privacy policy
+                                    },
                                 ),
                               ],
                             ),
@@ -300,14 +298,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               color: theme.colorScheme.primary,
                               fontWeight: FontWeight.bold,
                             ),
-                            recognizer:
-                                TapGestureRecognizer()
-                                  ..onTap = () {
-                                    Navigator.pushReplacementNamed(
-                                      context,
-                                      AppRouter.login,
-                                    );
-                                  },
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                Navigator.pushReplacementNamed(
+                                  context,
+                                  AppRouter.login,
+                                );
+                              },
                           ),
                         ],
                       ),

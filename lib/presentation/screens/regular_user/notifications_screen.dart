@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/config/app_router.dart';
-import '../widgets/common_widgets.dart';
+import '../../../core/config/app_router.dart';
+import '../../widgets/common_widgets.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({Key? key}) : super(key: key);
@@ -53,19 +53,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ],
       ),
-      body:
-          _notifications.isEmpty
-              ? const EmptyStateWidget(
-                message: 'No notifications yet',
-                icon: Icons.notifications_none,
-              )
-              : ListView.builder(
-                itemCount: _notifications.length,
-                itemBuilder: (context, index) {
-                  final notification = _notifications[index];
-                  return _buildNotificationItem(notification);
-                },
-              ),
+      body: _notifications.isEmpty
+          ? const EmptyStateWidget(
+              message: 'No notifications yet',
+              icon: Icons.notifications_none,
+            )
+          : ListView.builder(
+              itemCount: _notifications.length,
+              itemBuilder: (context, index) {
+                final notification = _notifications[index];
+                return _buildNotificationItem(notification);
+              },
+            ),
     );
   }
 
@@ -132,10 +131,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
       isThreeLine: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      tileColor:
-          notification.isRead
-              ? null
-              : theme.colorScheme.primaryContainer.withOpacity(0.1),
+      tileColor: notification.isRead
+          ? null
+          : theme.colorScheme.primaryContainer.withOpacity(0.1),
       onTap: () {
         setState(() {
           notification.isRead = true;

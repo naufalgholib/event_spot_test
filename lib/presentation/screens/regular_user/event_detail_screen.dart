@@ -5,23 +5,23 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../core/constants/app_constants.dart';
-import '../../core/config/app_router.dart';
-import '../../data/models/event_model.dart';
-import '../../data/repositories/mock_event_repository.dart';
-import '../../data/repositories/mock_user_repository.dart';
-import '../../data/repositories/mock_registration_repository.dart';
-import '../widgets/common_widgets.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../../core/config/app_router.dart';
+import '../../../data/models/event_model.dart';
+import '../../../data/repositories/mock_event_repository.dart';
+import '../../../data/repositories/mock_user_repository.dart';
+import '../../../data/repositories/mock_registration_repository.dart';
+import '../../widgets/common_widgets.dart';
 
 class EventDetailScreen extends StatefulWidget {
   final int eventId;
   final String? eventSlug;
 
   const EventDetailScreen({super.key, this.eventId = 0, this.eventSlug})
-    : assert(
-        eventId != 0 || eventSlug != null,
-        'Either eventId or eventSlug must be provided',
-      );
+      : assert(
+          eventId != 0 || eventSlug != null,
+          'Either eventId or eventSlug must be provided',
+        );
 
   @override
   State<EventDetailScreen> createState() => _EventDetailScreenState();
@@ -147,23 +147,22 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     if (!_isLoggedIn) {
       final result = await showDialog<bool>(
         context: context,
-        builder:
-            (context) => AlertDialog(
-              title: const Text('Login Required'),
-              content: const Text(
-                'You need to be logged in to register for this event',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  child: const Text('Login'),
-                ),
-              ],
+        builder: (context) => AlertDialog(
+          title: const Text('Login Required'),
+          content: const Text(
+            'You need to be logged in to register for this event',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
             ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Login'),
+            ),
+          ],
+        ),
       );
 
       if (result == true) {
@@ -206,19 +205,18 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           // For free events, show confirmation directly
           showDialog(
             context: context,
-            builder:
-                (context) => AlertDialog(
-                  title: const Text('Registration Successful'),
-                  content: const Text(
-                    'You have successfully registered for this event.',
-                  ),
-                  actions: [
-                    ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('OK'),
-                    ),
-                  ],
+            builder: (context) => AlertDialog(
+              title: const Text('Registration Successful'),
+              content: const Text(
+                'You have successfully registered for this event.',
+              ),
+              actions: [
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'),
                 ),
+              ],
+            ),
           );
         }
       }
@@ -255,10 +253,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
               ? ErrorStateWidget(message: _error!, onRetry: _loadData)
               : _buildEventDetail(),
       bottomNavigationBar: _event != null ? _buildBottomBar() : null,
@@ -270,10 +267,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
     final theme = Theme.of(context);
     final hasImages = _event!.images != null && _event!.images!.isNotEmpty;
-    final displayImage =
-        hasImages
-            ? _event!.images![_currentImageIndex].imagePath
-            : _event!.posterImage;
+    final displayImage = hasImages
+        ? _event!.images![_currentImageIndex].imagePath
+        : _event!.posterImage;
 
     return CustomScrollView(
       slivers: [
@@ -288,21 +284,19 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 // Event Image
                 displayImage != null && displayImage.isNotEmpty
                     ? CachedNetworkImage(
-                      imageUrl: displayImage,
-                      fit: BoxFit.cover,
-                      placeholder:
-                          (context, url) =>
-                              const Center(child: CircularProgressIndicator()),
-                      errorWidget:
-                          (context, url, error) => Image.asset(
-                            AppConstants.placeholderImagePath,
-                            fit: BoxFit.cover,
-                          ),
-                    )
+                        imageUrl: displayImage,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) =>
+                            const Center(child: CircularProgressIndicator()),
+                        errorWidget: (context, url, error) => Image.asset(
+                          AppConstants.placeholderImagePath,
+                          fit: BoxFit.cover,
+                        ),
+                      )
                     : Image.asset(
-                      AppConstants.placeholderImagePath,
-                      fit: BoxFit.cover,
-                    ),
+                        AppConstants.placeholderImagePath,
+                        fit: BoxFit.cover,
+                      ),
 
                 // Gradient overlay for better text visibility
                 Container(
@@ -335,10 +329,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                           margin: const EdgeInsets.symmetric(horizontal: 4),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color:
-                                _currentImageIndex == index
-                                    ? Colors.white
-                                    : Colors.white.withOpacity(0.5),
+                            color: _currentImageIndex == index
+                                ? Colors.white
+                                : Colors.white.withOpacity(0.5),
                           ),
                         ),
                       ),
@@ -459,12 +452,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   Icons.person,
                   'Organizer',
                   _event!.promotorName,
-                  onTap:
-                      () => Navigator.pushNamed(
-                        context,
-                        AppRouter.promoterProfile,
-                        arguments: _event!.promotorId,
-                      ),
+                  onTap: () => Navigator.pushNamed(
+                    context,
+                    AppRouter.promoterProfile,
+                    arguments: _event!.promotorId,
+                  ),
                 ),
 
                 const SizedBox(height: 8),
@@ -485,10 +477,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   Icons.how_to_reg,
                   'Registration',
                   'Until ${DateFormat('MMM d, y').format(_event!.registrationEnd)}',
-                  subtitle:
-                      _event!.isRegistrationOpen
-                          ? 'Registration is open'
-                          : _event!.registrationEnd.isBefore(DateTime.now())
+                  subtitle: _event!.isRegistrationOpen
+                      ? 'Registration is open'
+                      : _event!.registrationEnd.isBefore(DateTime.now())
                           ? 'Registration has ended'
                           : 'Registration starts on ${DateFormat('MMM d, y').format(_event!.registrationStart)}',
                 ),
@@ -500,10 +491,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   Icons.group,
                   'Attendees',
                   '${_event!.totalAttendees ?? 0}${_event!.maxAttendees != null ? ' / ${_event!.maxAttendees}' : ''}',
-                  subtitle:
-                      _event!.isFullCapacity
-                          ? 'This event is at full capacity'
-                          : null,
+                  subtitle: _event!.isFullCapacity
+                      ? 'This event is at full capacity'
+                      : null,
                 ),
 
                 const Divider(height: 32),
@@ -529,14 +519,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 // Map
                 if (_event!.latitude != null && _event!.longitude != null) ...[
                   const SizedBox(height: 24),
-
                   const Text(
                     'Location',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-
                   const SizedBox(height: 8),
-
                   Container(
                     height: 200,
                     decoration: BoxDecoration(
@@ -619,31 +606,27 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 // Tags
                 if (_event!.tags != null && _event!.tags!.isNotEmpty) ...[
                   const SizedBox(height: 24),
-
                   const Text(
                     'Tags',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-
                   const SizedBox(height: 8),
-
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children:
-                        _event!.tags!.map((tag) {
-                          return Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Text(tag.name),
-                          );
-                        }).toList(),
+                    children: _event!.tags!.map((tag) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(tag.name),
+                      );
+                    }).toList(),
                   ),
                 ],
 
@@ -749,18 +732,16 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             // Register/Payment button
             Expanded(
               child: AppButton(
-                text:
-                    _isRegistered
-                        ? 'Registered'
-                        : _event!.isFree
+                text: _isRegistered
+                    ? 'Registered'
+                    : _event!.isFree
                         ? 'Register Now'
                         : 'Pay ${NumberFormat.currency(symbol: '\$').format(_event!.price)}',
-                onPressed:
-                    _isRegistered
-                        ? (() {})
-                        : (() {
-                          _registerForEvent();
-                        }),
+                onPressed: _isRegistered
+                    ? (() {})
+                    : (() {
+                        _registerForEvent();
+                      }),
                 isLoading: _isRegistering,
               ),
             ),

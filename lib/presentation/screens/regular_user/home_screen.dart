@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/config/app_router.dart';
-import '../../core/config/app_constants.dart';
-import '../../core/providers/auth_provider.dart';
-import '../../data/models/event_model.dart';
-import '../../data/models/user_model.dart';
-import '../../data/repositories/mock_event_repository.dart';
-import '../../data/repositories/mock_user_repository.dart';
-import '../widgets/common_widgets.dart';
+import '../../../core/config/app_router.dart';
+import '../../../core/config/app_constants.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../data/models/event_model.dart';
+import '../../../data/models/user_model.dart';
+import '../../../data/repositories/mock_event_repository.dart';
+import '../../../data/repositories/mock_user_repository.dart';
+import '../../widgets/common_widgets.dart';
 import 'event_search_screen.dart';
 import 'user_profile_screen.dart';
 

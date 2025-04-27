@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../core/config/app_router.dart';
-import '../../core/config/app_constants.dart';
-import '../../data/models/event_model.dart';
-import '../../data/repositories/mock_event_repository.dart';
-import '../widgets/common_widgets.dart';
-import '../widgets/event_card.dart';
+import '../../../core/config/app_router.dart';
+import '../../../core/config/app_constants.dart';
+import '../../../data/models/event_model.dart';
+import '../../../data/repositories/mock_event_repository.dart';
+import '../../widgets/common_widgets.dart';
+import '../../widgets/event_card.dart';
 
 class UserEventsScreen extends StatefulWidget {
   const UserEventsScreen({Key? key}) : super(key: key);
@@ -94,21 +94,20 @@ class _UserEventsScreenState extends State<UserEventsScreen>
           tabs: const [Tab(text: 'Upcoming'), Tab(text: 'Past')],
         ),
       ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
               ? ErrorStateWidget(
-                message: _error!,
-                onRetry: _loadRegisteredEvents,
-              )
+                  message: _error!,
+                  onRetry: _loadRegisteredEvents,
+                )
               : TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildEventList(_upcomingEvents, 'No upcoming events'),
-                  _buildEventList(_pastEvents, 'No past events'),
-                ],
-              ),
+                  controller: _tabController,
+                  children: [
+                    _buildEventList(_upcomingEvents, 'No upcoming events'),
+                    _buildEventList(_pastEvents, 'No past events'),
+                  ],
+                ),
     );
   }
 

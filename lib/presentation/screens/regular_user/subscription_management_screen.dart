@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../core/config/app_router.dart';
-import '../../core/providers/auth_provider.dart';
-import '../../data/models/user_model.dart';
-import '../../data/repositories/mock_user_repository.dart';
-import '../widgets/common_widgets.dart';
+import '../../../core/config/app_router.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../data/models/user_model.dart';
+import '../../../data/repositories/mock_user_repository.dart';
+import '../../widgets/common_widgets.dart';
 
 class SubscriptionManagementScreen extends StatefulWidget {
   const SubscriptionManagementScreen({super.key});
@@ -187,22 +187,19 @@ class _SubscriptionManagementScreenState
 
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundImage:
-                      promoter.profilePicture != null
-                          ? NetworkImage(promoter.profilePicture!)
-                          : null,
-                  child:
-                      promoter.profilePicture == null
-                          ? Text(promoter.name[0])
-                          : null,
+                  backgroundImage: promoter.profilePicture != null
+                      ? NetworkImage(promoter.profilePicture!)
+                      : null,
+                  child: promoter.profilePicture == null
+                      ? Text(promoter.name[0])
+                      : null,
                 ),
                 title: Text(
                   promoter.promoterDetail?.companyName ?? promoter.name,
                 ),
-                subtitle:
-                    promoter.promoterDetail?.companyName != null
-                        ? Text('by ${promoter.name}')
-                        : null,
+                subtitle: promoter.promoterDetail?.companyName != null
+                    ? Text('by ${promoter.name}')
+                    : null,
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -321,43 +318,42 @@ class _SubscriptionManagementScreenState
 
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: Text('Unsubscribe from $name?'),
-            content: Text(
-              isCategory
-                  ? 'You will no longer receive notifications about events in this category.'
-                  : 'You will no longer receive notifications from this promoter.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  if (isCategory) {
-                    setState(() {
-                      _followedCategories.remove(item);
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Unsubscribed from $name'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  } else {
-                    _unfollowPromoter(item);
-                  }
-                },
-                child: const Text(
-                  'Unsubscribe',
-                  style: TextStyle(color: Colors.red),
-                ),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: Text('Unsubscribe from $name?'),
+        content: Text(
+          isCategory
+              ? 'You will no longer receive notifications about events in this category.'
+              : 'You will no longer receive notifications from this promoter.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
           ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              if (isCategory) {
+                setState(() {
+                  _followedCategories.remove(item);
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Unsubscribed from $name'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } else {
+                _unfollowPromoter(item);
+              }
+            },
+            child: const Text(
+              'Unsubscribe',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

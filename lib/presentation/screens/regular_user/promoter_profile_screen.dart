@@ -3,14 +3,14 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/config/app_constants.dart';
-import '../../core/config/app_router.dart';
-import '../../core/providers/auth_provider.dart';
-import '../../data/models/user_model.dart';
-import '../../data/models/event_model.dart';
-import '../../data/repositories/mock_user_repository.dart';
-import '../../data/repositories/mock_event_repository.dart';
-import '../widgets/common_widgets.dart';
+import '../../../core/config/app_constants.dart';
+import '../../../core/config/app_router.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../data/models/user_model.dart';
+import '../../../data/models/event_model.dart';
+import '../../../data/repositories/mock_user_repository.dart';
+import '../../../data/repositories/mock_event_repository.dart';
+import '../../widgets/common_widgets.dart';
 
 class PromoterProfileScreen extends StatefulWidget {
   final int promoterId;
@@ -170,10 +170,9 @@ class _PromoterProfileScreenState extends State<PromoterProfileScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
               ? ErrorStateWidget(message: _error!, onRetry: _loadData)
               : _buildContent(),
     );
@@ -186,62 +185,57 @@ class _PromoterProfileScreenState extends State<PromoterProfileScreen>
     final promoterDetail = _promoter!.promoterDetail!;
 
     return NestedScrollView(
-      headerSliverBuilder:
-          (context, innerBoxIsScrolled) => [
-            SliverAppBar(
-              expandedHeight: 200,
-              pinned: true,
-              flexibleSpace: FlexibleSpaceBar(
-                background: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    // Company Logo or Profile Picture
-                    if (promoterDetail.companyLogo != null)
-                      CachedNetworkImage(
-                        imageUrl: promoterDetail.companyLogo!,
-                        fit: BoxFit.cover,
-                        placeholder:
-                            (context, url) => const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                        errorWidget:
-                            (context, url, error) =>
-                                Image.asset(AppConstants.placeholderImagePath),
-                      )
-                    else if (_promoter!.profilePicture != null)
-                      CachedNetworkImage(
-                        imageUrl: _promoter!.profilePicture!,
-                        fit: BoxFit.cover,
-                        placeholder:
-                            (context, url) => const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                        errorWidget:
-                            (context, url, error) =>
-                                Image.asset(AppConstants.placeholderImagePath),
-                      )
-                    else
-                      Image.asset(AppConstants.placeholderImagePath),
-
-                    // Gradient overlay
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.7),
-                          ],
-                          stops: const [0.6, 1.0],
-                        ),
-                      ),
+      headerSliverBuilder: (context, innerBoxIsScrolled) => [
+        SliverAppBar(
+          expandedHeight: 200,
+          pinned: true,
+          flexibleSpace: FlexibleSpaceBar(
+            background: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Company Logo or Profile Picture
+                if (promoterDetail.companyLogo != null)
+                  CachedNetworkImage(
+                    imageUrl: promoterDetail.companyLogo!,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => const Center(
+                      child: CircularProgressIndicator(),
                     ),
-                  ],
+                    errorWidget: (context, url, error) =>
+                        Image.asset(AppConstants.placeholderImagePath),
+                  )
+                else if (_promoter!.profilePicture != null)
+                  CachedNetworkImage(
+                    imageUrl: _promoter!.profilePicture!,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                    errorWidget: (context, url, error) =>
+                        Image.asset(AppConstants.placeholderImagePath),
+                  )
+                else
+                  Image.asset(AppConstants.placeholderImagePath),
+
+                // Gradient overlay
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.7),
+                      ],
+                      stops: const [0.6, 1.0],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
+        ),
+      ],
       body: Column(
         children: [
           Padding(
@@ -264,7 +258,6 @@ class _PromoterProfileScreenState extends State<PromoterProfileScreen>
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-
                           if (promoterDetail.companyName != null) ...[
                             const SizedBox(height: 4),
                             Text(
@@ -282,14 +275,12 @@ class _PromoterProfileScreenState extends State<PromoterProfileScreen>
                       icon: Icon(_isFollowing ? Icons.check : Icons.add),
                       label: Text(_isFollowing ? 'Following' : 'Follow'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            _isFollowing
-                                ? Colors.grey[300]
-                                : theme.colorScheme.primary,
-                        foregroundColor:
-                            _isFollowing
-                                ? theme.colorScheme.onSurface
-                                : theme.colorScheme.onPrimary,
+                        backgroundColor: _isFollowing
+                            ? Colors.grey[300]
+                            : theme.colorScheme.primary,
+                        foregroundColor: _isFollowing
+                            ? theme.colorScheme.onSurface
+                            : theme.colorScheme.onPrimary,
                       ),
                     ),
                   ],
@@ -304,10 +295,9 @@ class _PromoterProfileScreenState extends State<PromoterProfileScreen>
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color:
-                        promoterDetail.verificationStatus == 'verified'
-                            ? Colors.green.withOpacity(0.2)
-                            : Colors.orange.withOpacity(0.2),
+                    color: promoterDetail.verificationStatus == 'verified'
+                        ? Colors.green.withOpacity(0.2)
+                        : Colors.orange.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -318,10 +308,9 @@ class _PromoterProfileScreenState extends State<PromoterProfileScreen>
                             ? Icons.verified
                             : Icons.pending,
                         size: 16,
-                        color:
-                            promoterDetail.verificationStatus == 'verified'
-                                ? Colors.green
-                                : Colors.orange,
+                        color: promoterDetail.verificationStatus == 'verified'
+                            ? Colors.green
+                            : Colors.orange,
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -329,10 +318,9 @@ class _PromoterProfileScreenState extends State<PromoterProfileScreen>
                             ? 'Verified Promoter'
                             : 'Verification Pending',
                         style: TextStyle(
-                          color:
-                              promoterDetail.verificationStatus == 'verified'
-                                  ? Colors.green[800]
-                                  : Colors.orange[800],
+                          color: promoterDetail.verificationStatus == 'verified'
+                              ? Colors.green[800]
+                              : Colors.orange[800],
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -363,34 +351,30 @@ class _PromoterProfileScreenState extends State<PromoterProfileScreen>
                       if (promoterDetail.socialMedia!['facebook'] != null)
                         IconButton(
                           icon: const Icon(Icons.facebook),
-                          onPressed:
-                              () => _launchUrl(
-                                promoterDetail.socialMedia!['facebook']!,
-                              ),
+                          onPressed: () => _launchUrl(
+                            promoterDetail.socialMedia!['facebook']!,
+                          ),
                         ),
                       if (promoterDetail.socialMedia!['twitter'] != null)
                         IconButton(
                           icon: const Icon(Icons.flutter_dash),
-                          onPressed:
-                              () => _launchUrl(
-                                promoterDetail.socialMedia!['twitter']!,
-                              ),
+                          onPressed: () => _launchUrl(
+                            promoterDetail.socialMedia!['twitter']!,
+                          ),
                         ),
                       if (promoterDetail.socialMedia!['instagram'] != null)
                         IconButton(
                           icon: const Icon(Icons.camera_alt),
-                          onPressed:
-                              () => _launchUrl(
-                                promoterDetail.socialMedia!['instagram']!,
-                              ),
+                          onPressed: () => _launchUrl(
+                            promoterDetail.socialMedia!['instagram']!,
+                          ),
                         ),
                       if (promoterDetail.socialMedia!['linkedin'] != null)
                         IconButton(
                           icon: const Icon(Icons.link),
-                          onPressed:
-                              () => _launchUrl(
-                                promoterDetail.socialMedia!['linkedin']!,
-                              ),
+                          onPressed: () => _launchUrl(
+                            promoterDetail.socialMedia!['linkedin']!,
+                          ),
                         ),
                     ],
                   ),
@@ -433,15 +417,13 @@ class _PromoterProfileScreenState extends State<PromoterProfileScreen>
     }
 
     final now = DateTime.now();
-    final filteredEvents =
-        _events!
-            .where(
-              (event) =>
-                  upcoming
-                      ? event.startDate.isAfter(now)
-                      : event.startDate.isBefore(now),
-            )
-            .toList();
+    final filteredEvents = _events!
+        .where(
+          (event) => upcoming
+              ? event.startDate.isAfter(now)
+              : event.startDate.isBefore(now),
+        )
+        .toList();
 
     if (filteredEvents.isEmpty) {
       return EmptyStateWidget(

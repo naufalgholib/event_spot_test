@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import '../../core/config/app_constants.dart';
-import '../../core/config/app_router.dart';
-import '../../data/models/category_model.dart';
-import '../../data/models/event_model.dart';
-import '../../data/repositories/mock_category_repository.dart';
-import '../../data/repositories/mock_event_repository.dart';
-import '../widgets/common_widgets.dart';
-import '../widgets/event_card.dart';
+import '../../../core/config/app_constants.dart';
+import '../../../core/config/app_router.dart';
+import '../../../data/models/category_model.dart';
+import '../../../data/models/event_model.dart';
+import '../../../data/repositories/mock_category_repository.dart';
+import '../../../data/repositories/mock_event_repository.dart';
+import '../../widgets/common_widgets.dart';
+import '../../widgets/event_card.dart';
 
 class EventSearchScreen extends StatefulWidget {
   final String? initialQuery;
   final int? categoryId;
 
   const EventSearchScreen({Key? key, this.initialQuery, this.categoryId})
-    : super(key: key);
+      : super(key: key);
 
   @override
   State<EventSearchScreen> createState() => _EventSearchScreenState();
@@ -105,19 +105,18 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
               decoration: InputDecoration(
                 hintText: 'Search events, categories, locations...',
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon:
-                    _searchController.text.isNotEmpty
-                        ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() {
-                              _searchQuery = '';
-                            });
-                            _performSearch();
-                          },
-                        )
-                        : null,
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {
+                            _searchQuery = '';
+                          });
+                          _performSearch();
+                        },
+                      )
+                    : null,
                 fillColor: Theme.of(context).colorScheme.surface,
                 filled: true,
                 border: OutlineInputBorder(
@@ -152,10 +151,9 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
         children: [
           _buildFilterSection(),
           Expanded(
-            child:
-                _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _searchResults.isEmpty
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _searchResults.isEmpty
                     ? _buildEmptyResults()
                     : _buildSearchResults(),
           ),
@@ -564,10 +562,10 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
           Text(
             'Try adjusting your search or filters',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(
-                context,
-              ).colorScheme.onBackground.withOpacity(0.6),
-            ),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onBackground.withOpacity(0.6),
+                ),
           ),
         ],
       ),

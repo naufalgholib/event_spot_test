@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../core/config/app_router.dart';
-import '../../core/config/app_constants.dart';
-import '../../data/models/event_model.dart';
-import '../../data/repositories/mock_event_repository.dart';
-import '../widgets/common_widgets.dart';
-import '../widgets/event_card.dart';
+import '../../../core/config/app_router.dart';
+import '../../../core/config/app_constants.dart';
+import '../../../data/models/event_model.dart';
+import '../../../data/repositories/mock_event_repository.dart';
+import '../../widgets/common_widgets.dart';
+import '../../widgets/event_card.dart';
 
 class BookmarkedEventsScreen extends StatefulWidget {
   const BookmarkedEventsScreen({Key? key}) : super(key: key);
@@ -72,14 +72,13 @@ class _BookmarkedEventsScreenState extends State<BookmarkedEventsScreen> {
           },
         ),
       ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
               ? ErrorStateWidget(
-                message: _error!,
-                onRetry: _loadBookmarkedEvents,
-              )
+                  message: _error!,
+                  onRetry: _loadBookmarkedEvents,
+                )
               : _buildEventList(),
     );
   }

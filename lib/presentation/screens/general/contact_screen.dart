@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/common_widgets.dart';
+import '../../widgets/common_widgets.dart';
 
 class ContactScreen extends StatefulWidget {
   const ContactScreen({super.key});

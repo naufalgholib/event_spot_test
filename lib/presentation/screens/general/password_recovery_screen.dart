@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/config/app_router.dart';
-import '../widgets/common_widgets.dart';
+import '../../../core/config/app_router.dart';
+import '../../widgets/common_widgets.dart';
 
 class PasswordRecoveryScreen extends StatefulWidget {
   const PasswordRecoveryScreen({super.key});
@@ -105,19 +105,18 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child:
-                          _isLoading
-                              ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
                                 ),
-                              )
-                              : const Text('Send Reset Instructions'),
+                              ),
+                            )
+                          : const Text('Send Reset Instructions'),
                     ),
                   ),
                 ],

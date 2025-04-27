@@ -4,11 +4,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-import '../../core/config/app_constants.dart';
-import '../../core/config/app_router.dart';
-import '../../core/providers/auth_provider.dart';
-import '../../data/models/user_model.dart';
-import '../widgets/common_widgets.dart';
+import '../../../core/config/app_constants.dart';
+import '../../../core/config/app_router.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../data/models/user_model.dart';
+import '../../widgets/common_widgets.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -23,7 +23,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _bioController = TextEditingController();
-  
+
   String? _profilePicture;
   bool _isLoading = false;
   String? _error;
@@ -46,7 +46,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void _loadUserData() {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final user = authProvider.currentUser;
-    
+
     if (user != null) {
       _nameController.text = user.name;
       _emailController.text = user.email;
@@ -59,7 +59,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    
+
     if (image != null) {
       setState(() {
         _profilePicture = image.path;
@@ -106,7 +106,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final currentUser = authProvider.currentUser;
-      
+
       if (currentUser != null) {
         final updatedUser = UserModel(
           id: currentUser.id,
@@ -184,7 +184,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         children: [
                           CircleAvatar(
                             radius: 50,
-                            backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                            backgroundColor:
+                                theme.colorScheme.primary.withOpacity(0.1),
                             child: _profilePicture != null
                                 ? ClipOval(
                                     child: _profilePicture!.startsWith('http')
@@ -195,8 +196,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                             fit: BoxFit.cover,
                                             placeholder: (context, url) =>
                                                 const CircularProgressIndicator(),
-                                            errorWidget: (context, url, error) =>
-                                                const Icon(Icons.person, size: 50),
+                                            errorWidget:
+                                                (context, url, error) =>
+                                                    const Icon(Icons.person,
+                                                        size: 50),
                                           )
                                         : Image.file(
                                             File(_profilePicture!),
@@ -216,7 +219,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 shape: BoxShape.circle,
                               ),
                               child: IconButton(
-                                icon: const Icon(Icons.camera_alt, color: Colors.white),
+                                icon: const Icon(Icons.camera_alt,
+                                    color: Colors.white),
                                 onPressed: _pickImage,
                               ),
                             ),
@@ -295,4 +299,4 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
     );
   }
-} 
+}

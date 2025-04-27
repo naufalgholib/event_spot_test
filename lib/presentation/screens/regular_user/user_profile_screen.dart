@@ -3,14 +3,14 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/config/app_constants.dart';
-import '../../core/config/app_router.dart';
-import '../../core/providers/auth_provider.dart';
-import '../../data/models/user_model.dart';
-import '../../data/models/event_model.dart';
-import '../../data/repositories/mock_user_repository.dart';
-import '../../data/repositories/mock_event_repository.dart';
-import '../widgets/common_widgets.dart';
+import '../../../core/config/app_constants.dart';
+import '../../../core/config/app_router.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../data/models/user_model.dart';
+import '../../../data/models/event_model.dart';
+import '../../../data/repositories/mock_user_repository.dart';
+import '../../../data/repositories/mock_event_repository.dart';
+import '../../widgets/common_widgets.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -52,7 +52,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final user = authProvider.currentUser;
-      
+
       if (user == null) {
         throw Exception('User not found. Please log in.');
       }
@@ -180,23 +180,20 @@ class _UserProfileScreenState extends State<UserProfileScreen>
               CircleAvatar(
                 radius: 40,
                 backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-                child:
-                    user.profilePicture != null
-                        ? ClipOval(
-                          child: CachedNetworkImage(
-                            imageUrl: user.profilePicture!,
-                            width: 80,
-                            height: 80,
-                            fit: BoxFit.cover,
-                            placeholder:
-                                (context, url) =>
-                                    const CircularProgressIndicator(),
-                            errorWidget:
-                                (context, url, error) =>
-                                    const Icon(Icons.person, size: 40),
-                          ),
-                        )
-                        : const Icon(Icons.person, size: 40),
+                child: user.profilePicture != null
+                    ? ClipOval(
+                        child: CachedNetworkImage(
+                          imageUrl: user.profilePicture!,
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) =>
+                              const CircularProgressIndicator(),
+                          errorWidget: (context, url, error) =>
+                              const Icon(Icons.person, size: 40),
+                        ),
+                      )
+                    : const Icon(Icons.person, size: 40),
               ),
               const SizedBox(width: 16),
 

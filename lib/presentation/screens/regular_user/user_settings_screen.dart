@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/config/app_router.dart';
-import '../widgets/common_widgets.dart';
+import '../../../core/config/app_router.dart';
+import '../../widgets/common_widgets.dart';
 
 class UserSettingsScreen extends StatefulWidget {
   const UserSettingsScreen({super.key});
@@ -200,10 +200,9 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
       title: Text(title),
       trailing: DropdownButton<String>(
         value: value,
-        items:
-            items
-                .map((item) => DropdownMenuItem(value: item, child: Text(item)))
-                .toList(),
+        items: items
+            .map((item) => DropdownMenuItem(value: item, child: Text(item)))
+            .toList(),
         onChanged: onChanged,
       ),
     );

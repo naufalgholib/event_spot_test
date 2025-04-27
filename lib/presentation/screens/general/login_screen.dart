@@ -3,10 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/gestures.dart';
 
-import '../../core/config/app_router.dart';
-import '../../core/constants/app_constants.dart';
-import '../../core/providers/auth_provider.dart';
-import '../widgets/common_widgets.dart';
+import '../../../core/config/app_router.dart';
+import '../../../core/constants/app_constants.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../widgets/common_widgets.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
