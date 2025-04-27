@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/config/app_constants.dart';
 import '../../core/config/app_router.dart';
+import '../../core/providers/auth_provider.dart';
 import '../../data/models/user_model.dart';
 import '../../data/models/event_model.dart';
 import '../../data/repositories/mock_user_repository.dart';
@@ -19,11 +21,9 @@ class UserProfileScreen extends StatefulWidget {
 
 class _UserProfileScreenState extends State<UserProfileScreen>
     with SingleTickerProviderStateMixin {
-  final MockUserRepository _userRepository = MockUserRepository();
   final MockEventRepository _eventRepository = MockEventRepository();
 
   late TabController _tabController;
-  UserModel? _user;
   List<EventModel>? _upcomingEvents;
   List<EventModel>? _pastEvents;
   List<EventModel>? _bookmarkedEvents;
@@ -50,7 +50,9 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     });
 
     try {
-      final user = await _userRepository.getCurrentUser();
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final user = authProvider.currentUser;
+      
       if (user == null) {
         throw Exception('User not found. Please log in.');
       }
@@ -66,7 +68,6 @@ class _UserProfileScreenState extends State<UserProfileScreen>
 
       if (mounted) {
         setState(() {
-          _user = user;
           _upcomingEvents = upcoming;
           _pastEvents = past;
           _bookmarkedEvents = bookmarked;
@@ -88,11 +89,18 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   }
 
   void _editProfile() {
-    // TODO: Navigate to edit profile screen
+    Navigator.pushNamed(context, AppRouter.editProfile);
+  }
+
+  void _openSettings() {
+    Navigator.pushNamed(context, AppRouter.userSettings);
   }
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.currentUser;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Profile'),
@@ -110,31 +118,28 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           ),
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () {
-              // TODO: Navigate to settings
-            },
+            onPressed: _openSettings,
             tooltip: 'Settings',
           ),
         ],
       ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
               ? ErrorStateWidget(message: _error!, onRetry: _loadData)
-              : _buildContent(),
+              : _buildContent(user),
     );
   }
 
-  Widget _buildContent() {
-    if (_user == null) {
+  Widget _buildContent(UserModel? user) {
+    if (user == null) {
       return const Center(child: Text('Please log in to view your profile'));
     }
 
     return Column(
       children: [
         // User Info Section
-        _buildUserInfo(),
+        _buildUserInfo(user),
 
         // Tab Bar
         TabBar(
@@ -161,7 +166,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     );
   }
 
-  Widget _buildUserInfo() {
+  Widget _buildUserInfo(UserModel user) {
     final theme = Theme.of(context);
 
     return Container(
@@ -176,10 +181,10 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                 radius: 40,
                 backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
                 child:
-                    _user!.profilePicture != null
+                    user.profilePicture != null
                         ? ClipOval(
                           child: CachedNetworkImage(
-                            imageUrl: _user!.profilePicture!,
+                            imageUrl: user.profilePicture!,
                             width: 80,
                             height: 80,
                             fit: BoxFit.cover,
@@ -201,7 +206,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _user!.name,
+                      user.name,
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -209,14 +214,14 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _user!.email,
+                      user.email,
                       style: TextStyle(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Member since ${DateFormat('MMM yyyy').format(_user!.createdAt)}',
+                      'Member since ${DateFormat('MMM yyyy').format(user.createdAt)}',
                       style: TextStyle(
                         fontSize: 12,
                         color: theme.colorScheme.onSurfaceVariant,

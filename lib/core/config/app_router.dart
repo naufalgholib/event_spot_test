@@ -20,6 +20,7 @@ import '../../presentation/screens/contact_screen.dart';
 import '../../presentation/screens/password_recovery_screen.dart';
 import '../../presentation/screens/user_settings_screen.dart';
 import '../../presentation/screens/subscription_management_screen.dart';
+import '../../presentation/screens/edit_profile_screen.dart';
 
 class AppRouter {
   static const String root = '/';
@@ -30,7 +31,7 @@ class AppRouter {
   static const String home = '/home';
   static const String eventDetail = '/event-detail';
   static const String userProfile = '/user-profile';
-  static const String userSettings = '/user-settings';
+  static const String userSettings = '/settings';
   static const String userEvents = '/user-events';
   static const String bookmarkedEvents = '/bookmarked-events';
   static const String subscriptions = '/subscriptions';
@@ -64,6 +65,7 @@ class AppRouter {
   static const String aboutFAQ = '/about-faq';
   static const String passwordRecovery = '/password-recovery';
   static const String subscriptionManagement = '/subscription-management';
+  static const String editProfile = '/edit-profile';
 
   static Route<dynamic> generateRoute(
     RouteSettings settings, {
@@ -252,6 +254,9 @@ class AppRouter {
 
           case subscriptionManagement:
             return const SubscriptionManagementScreen();
+
+          case editProfile:
+            return const EditProfileScreen();
 
           // Add other routes as needed
 
