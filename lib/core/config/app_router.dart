@@ -29,6 +29,8 @@ import '../../presentation/screens/promotor/attendee_management_screen.dart';
 import '../../presentation/screens/promotor/analytics_dashboard_screen.dart';
 import '../../presentation/screens/promotor/verification_document_upload_screen.dart';
 import '../../presentation/screens/promotor/verification_waiting_screen.dart';
+import '../../presentation/screens/promotor/promotor_profile_screen.dart';
+import '../../presentation/screens/promotor/promotor_settings_screen.dart';
 
 class AppRouter {
   static const String root = '/';
@@ -75,6 +77,8 @@ class AppRouter {
   static const String passwordRecovery = '/password-recovery';
   static const String subscriptionManagement = '/subscription-management';
   static const String editProfile = '/edit-profile';
+  static const String promotorProfile = '/promotor-profile';
+  static const String promotorSettings = '/promotor-settings';
 
   static Route<dynamic> generateRoute(
     RouteSettings settings, {
@@ -308,6 +312,12 @@ class AppRouter {
 
           case verificationWaiting:
             return const VerificationWaitingScreen();
+
+          case promotorProfile:
+            return const PromotorProfileScreen();
+
+          case promotorSettings:
+            return const PromotorSettingsScreen();
 
           // Add other routes as needed
 

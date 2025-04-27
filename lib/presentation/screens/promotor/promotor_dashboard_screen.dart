@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/event_model.dart';
+import '../../../data/models/user_model.dart';
 import '../../../data/repositories/mock_event_repository.dart';
 import '../../../core/config/app_router.dart';
+import '../../../core/providers/auth_provider.dart';
 import 'event_creation_screen.dart';
 import 'event_management_screen.dart';
 import 'analytics_dashboard_screen.dart';
@@ -41,11 +44,15 @@ class _PromotorDashboardScreenState extends State<PromotorDashboardScreen> {
       _isLoading = true;
     });
 
-    // Mock promotor ID - in a real app, this would come from auth
-    const int promotorId = 2;
-
     try {
-      final events = await _eventRepository.getEventsByPromoter(promotorId);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final user = authProvider.currentUser;
+
+      if (user == null || !user.isPromoter) {
+        throw Exception('User not found or not a promoter');
+      }
+
+      final events = await _eventRepository.getEventsByPromoter(user.id);
       setState(() {
         _promotorEvents = events;
         _isLoading = false;
@@ -55,22 +62,28 @@ class _PromotorDashboardScreenState extends State<PromotorDashboardScreen> {
         _isLoading = false;
       });
       // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to load events: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load events: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.currentUser;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Promoter Dashboard'),
         centerTitle: true,
       ),
+      drawer: _buildDrawer(user),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
@@ -80,7 +93,7 @@ class _PromotorDashboardScreenState extends State<PromotorDashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildWelcomeCard(),
+                    _buildWelcomeCard(user),
                     const SizedBox(height: 20),
                     _buildQuickActions(),
                     const SizedBox(height: 20),
@@ -102,7 +115,122 @@ class _PromotorDashboardScreenState extends State<PromotorDashboardScreen> {
     );
   }
 
-  Widget _buildWelcomeCard() {
+  Widget _buildDrawer(UserModel? user) {
+    if (user == null) return const SizedBox.shrink();
+
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.white,
+                  backgroundImage: user.profilePicture != null
+                      ? NetworkImage(user.profilePicture!) as ImageProvider
+                      : const AssetImage('assets/images/default_profile.png'),
+                  child: user.profilePicture == null
+                      ? Icon(Icons.person,
+                          color: AppTheme.primaryColor, size: 40)
+                      : null,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  user.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  user.promoterDetail?.companyName ?? 'Promoter',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.dashboard),
+            title: const Text('Dashboard'),
+            onTap: () {
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.business),
+            title: const Text('Profile'),
+            onTap: () {
+              Navigator.pop(context);
+              // Get the current user ID
+              final userId = Provider.of<AuthProvider>(context, listen: false)
+                  .currentUser
+                  ?.id;
+              if (userId != null) {
+                Navigator.pushNamed(context, AppRouter.promoterProfile,
+                    arguments: userId);
+              }
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.settings),
+            title: const Text('Settings'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, AppRouter.promotorSettings);
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.help_outline),
+            title: const Text('Help & Support'),
+            onTap: () {
+              Navigator.pop(context);
+              // Navigate to help page
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: const Text('About'),
+            onTap: () {
+              Navigator.pop(context);
+              // Navigate to about page
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text('Logout', style: TextStyle(color: Colors.red)),
+            onTap: () async {
+              Navigator.pop(context);
+              await Provider.of<AuthProvider>(context, listen: false).logout();
+              if (mounted) {
+                Navigator.pushReplacementNamed(context, AppRouter.login);
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWelcomeCard(UserModel? user) {
+    if (user == null) return const SizedBox.shrink();
+
+    final companyName = user.promoterDetail?.companyName;
+    final welcomeText = companyName != null
+        ? 'Welcome ${user.name} from $companyName!'
+        : 'Welcome ${user.name}!';
+
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -116,16 +244,21 @@ class _PromotorDashboardScreenState extends State<PromotorDashboardScreen> {
                 CircleAvatar(
                   radius: 30,
                   backgroundColor: AppTheme.primaryColor,
-                  child: Icon(Icons.business, color: Colors.white, size: 30),
+                  backgroundImage: user.profilePicture != null
+                      ? NetworkImage(user.profilePicture!)
+                      : null,
+                  child: user.profilePicture == null
+                      ? Icon(Icons.business, color: Colors.white, size: 30)
+                      : null,
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Welcome back, Live Nation!',
-                        style: TextStyle(
+                      Text(
+                        welcomeText,
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
@@ -241,11 +374,19 @@ class _PromotorDashboardScreenState extends State<PromotorDashboardScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: _buildActionCard(
-                title: 'Edit Profile',
+                title: 'Profile',
                 icon: Icons.business,
                 color: Colors.purple,
                 onTap: () {
-                  // Navigate to profile edit page
+                  // Get the current user ID
+                  final userId =
+                      Provider.of<AuthProvider>(context, listen: false)
+                          .currentUser
+                          ?.id;
+                  if (userId != null) {
+                    Navigator.pushNamed(context, AppRouter.promoterProfile,
+                        arguments: userId);
+                  }
                 },
               ),
             ),

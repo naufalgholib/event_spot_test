@@ -321,11 +321,10 @@ class MockUserRepository {
   // Get all promoters that a user is following
   Future<List<UserModel>> getFollowedPromoters(int userId) async {
     await Future.delayed(const Duration(milliseconds: 800));
-    final promoterIds =
-        _followers
-            .where((follower) => follower.userId == userId)
-            .map((follower) => follower.promoterId)
-            .toList();
+    final promoterIds = _followers
+        .where((follower) => follower.userId == userId)
+        .map((follower) => follower.promoterId)
+        .toList();
 
     return _users
         .where(

@@ -63,6 +63,7 @@ Fitur untuk user biasa
 •	Melihat riwayat acara yang pernah dihadiri
 
 Fitur untuk promotor
+•	Beberapa hal basic yang bisa dilakukan oleh user biasa
 •	Pembuatan event baru dengan form lengkap (judul, deskripsi, kategori, lokasi, poster, free atau berbayar)
 •	Pilihan pembuatan deskripsi acara dengan bantuan AI-generated
 •	Pengelolaan acara yang dibuat (edit, hapus)

@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/category_model.dart';
@@ -40,7 +42,7 @@ class _EventEditScreenState extends State<EventEditScreen> {
   bool _isSaving = false;
   List<CategoryModel> _categories = [];
   bool _isFree = true;
-  final List<String> _eventImages = [];
+  List<dynamic> _eventImages = [];
 
   // Form key for validation
   final _formKey = GlobalKey<FormState>();
@@ -176,12 +178,24 @@ class _EventEditScreenState extends State<EventEditScreen> {
     return DateFormat('MMM dd, yyyy • h:mm a').format(dateTime);
   }
 
-  void _addImage() {
-    // In a real app, this would open the image picker
-    // For now, we'll just add placeholder URLs
-    setState(() {
-      _eventImages.add('https://source.unsplash.com/random/800x600/?event');
-    });
+  Future<void> _addImage() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+      if (image != null) {
+        setState(() {
+          _eventImages.add(image.path);
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error selecting image: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _removeImage(int index) {
@@ -663,12 +677,20 @@ class _EventEditScreenState extends State<EventEditScreen> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          _eventImages[index],
-                          width: double.infinity,
-                          height: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
+                        child: _eventImages[index] is String &&
+                                _eventImages[index].startsWith('http')
+                            ? Image.network(
+                                _eventImages[index],
+                                width: double.infinity,
+                                height: double.infinity,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.file(
+                                File(_eventImages[index]),
+                                width: double.infinity,
+                                height: double.infinity,
+                                fit: BoxFit.cover,
+                              ),
                       ),
                       Positioned(
                         top: 4,
