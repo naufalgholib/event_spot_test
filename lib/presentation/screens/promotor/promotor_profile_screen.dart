@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/config/app_constants.dart';
-import '../../../core/config/app_router.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/user_model.dart';
@@ -475,7 +472,7 @@ class _PromotorProfileScreenState extends State<PromotorProfileScreen> {
                                   as ImageProvider
                               : null,
                           child: user.profilePicture == null
-                              ? Icon(Icons.business,
+                              ? const Icon(Icons.business,
                                   color: AppTheme.primaryColor, size: 60)
                               : null,
                         ),
@@ -484,7 +481,7 @@ class _PromotorProfileScreenState extends State<PromotorProfileScreen> {
                           bottom: 0,
                           child: Container(
                             padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               color: AppTheme.primaryColor,
                               shape: BoxShape.circle,
                             ),

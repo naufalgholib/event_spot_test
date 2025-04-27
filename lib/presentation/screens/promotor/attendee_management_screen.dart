@@ -156,22 +156,22 @@ class _AttendeeManagementScreenState extends State<AttendeeManagementScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Send Message to Attendees'),
-        content: Column(
+        content: const Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'Send a notification or email to all event attendees.',
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             TextField(
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Message Subject',
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             TextField(
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Message Content',
                 border: OutlineInputBorder(),
               ),
@@ -454,7 +454,8 @@ class _AttendeeManagementScreenState extends State<AttendeeManagementScreen> {
                     ? Tooltip(
                         message:
                             'Checked in at ${_formatTime(attendee['checkInTime'])}',
-                        child: Icon(Icons.check_circle, color: Colors.green),
+                        child:
+                            const Icon(Icons.check_circle, color: Colors.green),
                       )
                     : null,
           ),

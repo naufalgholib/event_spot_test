@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 import '../../../core/config/app_constants.dart';
-import '../../../core/config/app_router.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../data/models/user_model.dart';
 import '../../widgets/common_widgets.dart';

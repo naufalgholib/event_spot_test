@@ -4,7 +4,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/category_model.dart';
-import '../../../data/models/event_model.dart';
 import '../../../data/repositories/mock_event_repository.dart';
 
 class EventEditScreen extends StatefulWidget {
@@ -42,7 +41,7 @@ class _EventEditScreenState extends State<EventEditScreen> {
   bool _isSaving = false;
   List<CategoryModel> _categories = [];
   bool _isFree = true;
-  List<dynamic> _eventImages = [];
+  final List<dynamic> _eventImages = [];
 
   // Form key for validation
   final _formKey = GlobalKey<FormState>();
@@ -650,9 +649,9 @@ class _EventEditScreenState extends State<EventEditScreen> {
                 border: Border.all(color: Colors.grey),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Column(
+              child: const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   Icon(Icons.add_photo_alternate, size: 48, color: Colors.grey),
                   SizedBox(height: 8),
                   Text('Add Event Image'),

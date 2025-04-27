@@ -86,7 +86,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               alignment: Alignment.topRight,
               child: TextButton(
                 onPressed: _finishOnboarding,
-                child: Text('Skip'),
+                child: const Text('Skip'),
               ),
             ),
             Expanded(
@@ -113,20 +113,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         height: 8,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color:
-                              index == _currentPage
-                                  ? theme.colorScheme.primary
-                                  : Colors.grey.withOpacity(0.5),
+                          color: index == _currentPage
+                              ? theme.colorScheme.primary
+                              : Colors.grey.withOpacity(0.5),
                         ),
                       );
                     }),
                   ),
                   // Next button
                   AppButton(
-                    text:
-                        _currentPage == _pages.length - 1
-                            ? 'Get Started'
-                            : 'Next',
+                    text: _currentPage == _pages.length - 1
+                        ? 'Get Started'
+                        : 'Next',
                     onPressed: _nextPage,
                     width: 150,
                   ),
@@ -164,7 +162,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           const SizedBox(height: 40),
           Text(
             page.title,
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           Padding(

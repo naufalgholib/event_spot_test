@@ -653,7 +653,7 @@ class _CommentManagementScreenState extends State<CommentManagementScreen> {
                     color: AppTheme.primaryColor.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
+                  child: const Text(
                     'Organizer',
                     style: TextStyle(
                       fontSize: 10,

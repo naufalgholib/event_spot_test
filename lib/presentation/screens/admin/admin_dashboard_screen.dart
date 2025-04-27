@@ -70,13 +70,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ? NetworkImage(currentUser!.profilePicture!)
                       : null,
                   child: currentUser?.profilePicture == null
-                      ? Icon(Icons.person, size: 30, color: Colors.white)
+                      ? const Icon(Icons.person, size: 30, color: Colors.white)
                       : null,
                 ),
                 const SizedBox(height: 10),
                 Text(
                   currentUser?.name ?? 'Admin User',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

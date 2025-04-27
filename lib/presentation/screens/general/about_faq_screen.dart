@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../widgets/common_widgets.dart';
 
 class AboutFAQScreen extends StatelessWidget {
   const AboutFAQScreen({super.key});

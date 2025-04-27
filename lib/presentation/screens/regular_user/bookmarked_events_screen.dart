@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/config/app_router.dart';
 import '../../../core/config/app_constants.dart';
@@ -85,7 +84,7 @@ class _BookmarkedEventsScreenState extends State<BookmarkedEventsScreen> {
 
   Widget _buildEventList() {
     if (_bookmarkedEvents == null || _bookmarkedEvents!.isEmpty) {
-      return EmptyStateWidget(
+      return const EmptyStateWidget(
         message: 'You have no bookmarked events',
         icon: Icons.bookmark_border,
       );

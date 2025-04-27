@@ -3,7 +3,6 @@ import '../../../core/theme/app_theme.dart';
 import '../../../data/models/event_model.dart';
 import '../../../data/repositories/mock_event_repository.dart';
 import '../../../core/config/app_router.dart';
-import 'event_edit_screen.dart';
 
 class EventManagementScreen extends StatefulWidget {
   const EventManagementScreen({Key? key}) : super(key: key);
@@ -263,7 +262,7 @@ class _EventManagementScreenState extends State<EventManagementScreen>
               const SizedBox(height: 16),
               Text(
                 _searchQuery.isNotEmpty
-                    ? 'No events found matching "${_searchQuery}"'
+                    ? 'No events found matching "$_searchQuery"'
                     : 'No events in this category yet',
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: Colors.grey, fontSize: 16),
@@ -430,7 +429,7 @@ class _EventManagementScreenState extends State<EventManagementScreen>
                         icon: const Icon(Icons.edit, size: 16),
                         label: const Text('Edit'),
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: AppTheme.primaryColor),
+                          side: const BorderSide(color: AppTheme.primaryColor),
                         ),
                       ),
                     ),

@@ -95,7 +95,8 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundLight,
-      appBar: CustomAppBar(title: 'Analytics Dashboard', showBackButton: true),
+      appBar: const CustomAppBar(
+          title: 'Analytics Dashboard', showBackButton: true),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _buildDashboard(),
@@ -134,7 +135,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
   }
 
   Widget _buildTimeRangeSelector() {
-    return Container(
+    return SizedBox(
       height: SizeConfig.safeBlockVertical * 5,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
@@ -297,11 +298,11 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
             ),
           ),
           SizedBox(height: SizeConfig.safeBlockVertical * 2),
-          Container(
+          SizedBox(
             height: SizeConfig.safeBlockVertical * 25,
             child: LineChart(
               LineChartData(
-                gridData: FlGridData(show: false),
+                gridData: const FlGridData(show: false),
                 titlesData: FlTitlesData(
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
@@ -341,10 +342,10 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                       },
                     ),
                   ),
-                  rightTitles: AxisTitles(
+                  rightTitles: const AxisTitles(
                     sideTitles: SideTitles(showTitles: false),
                   ),
-                  topTitles: AxisTitles(
+                  topTitles: const AxisTitles(
                     sideTitles: SideTitles(showTitles: false),
                   ),
                 ),
@@ -363,7 +364,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                     color: AppTheme.primaryColor,
                     barWidth: 4,
                     isStrokeCapRound: true,
-                    dotData: FlDotData(show: false),
+                    dotData: const FlDotData(show: false),
                     belowBarData: BarAreaData(
                       show: true,
                       color: AppTheme.primaryColor.withOpacity(0.2),
@@ -435,7 +436,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
             ),
           ),
           SizedBox(height: SizeConfig.safeBlockVertical * 2),
-          Container(
+          SizedBox(
             height: SizeConfig.safeBlockVertical * 20,
             child: PieChart(
               PieChartData(
@@ -539,7 +540,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
             ),
           ),
           SizedBox(height: SizeConfig.safeBlockVertical * 2),
-          Container(
+          SizedBox(
             height: SizeConfig.safeBlockVertical * 20,
             child: BarChart(
               BarChartData(
@@ -585,10 +586,10 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                       },
                     ),
                   ),
-                  rightTitles: AxisTitles(
+                  rightTitles: const AxisTitles(
                     sideTitles: SideTitles(showTitles: false),
                   ),
-                  topTitles: AxisTitles(
+                  topTitles: const AxisTitles(
                     sideTitles: SideTitles(showTitles: false),
                   ),
                 ),
@@ -610,7 +611,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                     ],
                   ),
                 ),
-                gridData: FlGridData(show: false),
+                gridData: const FlGridData(show: false),
               ),
             ),
           ),
@@ -685,7 +686,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                   child: LinearProgressIndicator(
                     value: ticketCount / totalTickets,
                     backgroundColor: Colors.grey.shade200,
-                    valueColor: AlwaysStoppedAnimation<Color>(
+                    valueColor: const AlwaysStoppedAnimation<Color>(
                       AppTheme.primaryColor,
                     ),
                     minHeight: SizeConfig.safeBlockVertical * 1.5,
@@ -741,7 +742,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
             children: [
               Expanded(
                 flex: 3,
-                child: Container(
+                child: SizedBox(
                   height: SizeConfig.safeBlockVertical * 20,
                   child: PieChart(
                     PieChartData(

@@ -527,8 +527,8 @@ class _PromoterVerificationScreenState
                 _rejectVerification(request, reasonController.text);
               }
             },
-            child: const Text('Reject'),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Reject'),
           ),
         ],
       ),

@@ -15,7 +15,7 @@ class AppTheme {
   static const Color onBackgroundColor = Colors.black;
   static const Color onSurfaceColor = Colors.black;
   static const Color onErrorColor = Colors.white;
-  
+
   // Additional colors for the analytics dashboard
   static const Color backgroundLight = Color(0xFFF5F5F5);
   static const Color textDark = Color(0xFF212121);
@@ -30,12 +30,10 @@ class AppTheme {
       secondary: secondaryColor,
       secondaryContainer: secondaryVariantColor,
       surface: surfaceColor,
-      background: backgroundColor,
       error: errorColor,
       onPrimary: onPrimaryColor,
       onSecondary: onSecondaryColor,
       onSurface: onSurfaceColor,
-      onBackground: onBackgroundColor,
       onError: onErrorColor,
       brightness: Brightness.light,
     ),
@@ -108,18 +106,16 @@ class AppTheme {
   // Dark Theme
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
-    colorScheme: ColorScheme(
+    colorScheme: const ColorScheme(
       primary: primaryColor,
       primaryContainer: primaryVariantColor,
       secondary: secondaryColor,
       secondaryContainer: secondaryVariantColor,
-      surface: const Color(0xFF121212),
-      background: Colors.black,
+      surface: Color(0xFF121212),
       error: errorColor,
       onPrimary: onPrimaryColor,
       onSecondary: onSecondaryColor,
       onSurface: Colors.white,
-      onBackground: Colors.white,
       onError: onErrorColor,
       brightness: Brightness.dark,
     ),

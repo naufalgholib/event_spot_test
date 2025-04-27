@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/config/app_router.dart';
 import '../../../core/config/app_constants.dart';

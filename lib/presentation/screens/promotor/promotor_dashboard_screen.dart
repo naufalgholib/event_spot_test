@@ -6,9 +6,6 @@ import '../../../data/models/user_model.dart';
 import '../../../data/repositories/mock_event_repository.dart';
 import '../../../core/config/app_router.dart';
 import '../../../core/providers/auth_provider.dart';
-import 'event_creation_screen.dart';
-import 'event_management_screen.dart';
-import 'analytics_dashboard_screen.dart';
 
 class PromotorDashboardScreen extends StatefulWidget {
   const PromotorDashboardScreen({Key? key}) : super(key: key);
@@ -123,7 +120,7 @@ class _PromotorDashboardScreenState extends State<PromotorDashboardScreen> {
         padding: EdgeInsets.zero,
         children: [
           DrawerHeader(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppTheme.primaryColor,
             ),
             child: Column(
@@ -136,7 +133,7 @@ class _PromotorDashboardScreenState extends State<PromotorDashboardScreen> {
                       ? NetworkImage(user.profilePicture!) as ImageProvider
                       : const AssetImage('assets/images/default_profile.png'),
                   child: user.profilePicture == null
-                      ? Icon(Icons.person,
+                      ? const Icon(Icons.person,
                           color: AppTheme.primaryColor, size: 40)
                       : null,
                 ),
@@ -248,7 +245,8 @@ class _PromotorDashboardScreenState extends State<PromotorDashboardScreen> {
                       ? NetworkImage(user.profilePicture!)
                       : null,
                   child: user.profilePicture == null
-                      ? Icon(Icons.business, color: Colors.white, size: 30)
+                      ? const Icon(Icons.business,
+                          color: Colors.white, size: 30)
                       : null,
                 ),
                 const SizedBox(width: 16),

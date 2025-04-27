@@ -115,16 +115,15 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      if (category.description != null)
-                        Text(
-                          category.description!,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 14,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                      Text(
+                        category.description,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ],
                   ),
                 ),
@@ -372,7 +371,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Category "${name}" has been added'),
+        content: Text('Category "$name" has been added'),
         backgroundColor: Colors.green,
       ),
     );
@@ -399,7 +398,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Category "${name}" has been updated'),
+          content: Text('Category "$name" has been updated'),
           backgroundColor: Colors.blue,
         ),
       );

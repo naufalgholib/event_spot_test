@@ -93,7 +93,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (!_acceptTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Please accept the terms and conditions'),
           backgroundColor: Colors.red,
         ),
@@ -114,21 +114,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Account created successfully!'),
             backgroundColor: Colors.green,
           ),
         );
 
         // Navigate to home screen
-        Future.delayed(Duration(seconds: 1), () {
+        Future.delayed(const Duration(seconds: 1), () {
           Navigator.pushReplacementNamed(context, AppRouter.home);
         });
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('An error occurred. Please try again.'),
             backgroundColor: Colors.red,
           ),
@@ -151,15 +151,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
-        foregroundColor: theme.colorScheme.onBackground,
-        title: Text('Create Account'),
+        foregroundColor: theme.colorScheme.onSurface,
+        title: const Text('Create Account'),
       ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppConstants.defaultPadding),
             child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: 450),
+              constraints: const BoxConstraints(maxWidth: 450),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -172,7 +172,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       hintText: 'Enter your full name',
                       controller: _nameController,
                       validator: _validateName,
-                      prefixIcon: Icon(Icons.person_outline),
+                      prefixIcon: const Icon(Icons.person_outline),
                     ),
 
                     const SizedBox(height: 16),
@@ -184,7 +184,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _emailController,
                       validator: _validateEmail,
                       keyboardType: TextInputType.emailAddress,
-                      prefixIcon: Icon(Icons.email_outlined),
+                      prefixIcon: const Icon(Icons.email_outlined),
                     ),
 
                     const SizedBox(height: 16),
@@ -196,7 +196,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _passwordController,
                       validator: _validatePassword,
                       obscureText: !_isPasswordVisible,
-                      prefixIcon: Icon(Icons.lock_outline),
+                      prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _isPasswordVisible
@@ -216,7 +216,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _confirmPasswordController,
                       validator: _validateConfirmPassword,
                       obscureText: !_isConfirmPasswordVisible,
-                      prefixIcon: Icon(Icons.lock_outline),
+                      prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _isConfirmPasswordVisible
@@ -245,7 +245,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             text: TextSpan(
                               style: TextStyle(color: Colors.grey[700]),
                               children: [
-                                TextSpan(text: 'I agree to the '),
+                                const TextSpan(text: 'I agree to the '),
                                 TextSpan(
                                   text: 'Terms & Conditions',
                                   style: TextStyle(
@@ -256,7 +256,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       // TODO: Show terms and conditions
                                     },
                                 ),
-                                TextSpan(text: ' and '),
+                                const TextSpan(text: ' and '),
                                 TextSpan(
                                   text: 'Privacy Policy',
                                   style: TextStyle(
@@ -291,7 +291,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       text: TextSpan(
                         style: TextStyle(color: Colors.grey[600], fontSize: 16),
                         children: [
-                          TextSpan(text: 'Already have an account? '),
+                          const TextSpan(text: 'Already have an account? '),
                           TextSpan(
                             text: 'Login',
                             style: TextStyle(

@@ -35,26 +35,25 @@ class AppButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final buttonStyle =
-        isOutlined
-            ? OutlinedButton.styleFrom(
-              foregroundColor: textColor ?? theme.colorScheme.primary,
-              side: BorderSide(color: textColor ?? theme.colorScheme.primary),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(borderRadius),
-              ),
-              padding: padding,
-              minimumSize: Size(width ?? double.infinity, height),
-            )
-            : ElevatedButton.styleFrom(
-              foregroundColor: textColor ?? theme.colorScheme.onPrimary,
-              backgroundColor: backgroundColor ?? theme.colorScheme.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(borderRadius),
-              ),
-              padding: padding,
-              minimumSize: Size(width ?? double.infinity, height),
-            );
+    final buttonStyle = isOutlined
+        ? OutlinedButton.styleFrom(
+            foregroundColor: textColor ?? theme.colorScheme.primary,
+            side: BorderSide(color: textColor ?? theme.colorScheme.primary),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(borderRadius),
+            ),
+            padding: padding,
+            minimumSize: Size(width ?? double.infinity, height),
+          )
+        : ElevatedButton.styleFrom(
+            foregroundColor: textColor ?? theme.colorScheme.onPrimary,
+            backgroundColor: backgroundColor ?? theme.colorScheme.primary,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(borderRadius),
+            ),
+            padding: padding,
+            minimumSize: Size(width ?? double.infinity, height),
+          );
 
     Widget buttonContent = Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -75,22 +74,22 @@ class AppButton extends StatelessWidget {
         else
           Text(
             text,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
       ],
     );
 
     return isOutlined
         ? OutlinedButton(
-          onPressed: isLoading ? null : onPressed,
-          style: buttonStyle,
-          child: buttonContent,
-        )
+            onPressed: isLoading ? null : onPressed,
+            style: buttonStyle,
+            child: buttonContent,
+          )
         : ElevatedButton(
-          onPressed: isLoading ? null : onPressed,
-          style: buttonStyle,
-          child: buttonContent,
-        );
+            onPressed: isLoading ? null : onPressed,
+            style: buttonStyle,
+            child: buttonContent,
+          );
   }
 }
 
@@ -137,7 +136,7 @@ class AppTextField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
         const SizedBox(height: 8),
         TextFormField(
@@ -155,7 +154,7 @@ class AppTextField extends StatelessWidget {
             hintText: hintText,
             suffixIcon: suffixIcon,
             prefixIcon: prefixIcon,
-            contentPadding: contentPadding ?? EdgeInsets.all(16),
+            contentPadding: contentPadding ?? const EdgeInsets.all(16),
           ),
         ),
       ],
@@ -198,34 +197,31 @@ class SimpleEventCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.only(
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(AppConstants.cardBorderRadius),
                 topRight: Radius.circular(AppConstants.cardBorderRadius),
               ),
-              child:
-                  imageUrl != null && imageUrl!.isNotEmpty
-                      ? CachedNetworkImage(
-                        imageUrl: imageUrl!,
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        placeholder:
-                            (context, url) =>
-                                Center(child: CircularProgressIndicator()),
-                        errorWidget:
-                            (context, url, error) => Image.asset(
-                              AppConstants.placeholderImagePath,
-                              height: 180,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
-                      )
-                      : Image.asset(
+              child: imageUrl != null && imageUrl!.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: imageUrl!,
+                      height: 180,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) =>
+                          const Center(child: CircularProgressIndicator()),
+                      errorWidget: (context, url, error) => Image.asset(
                         AppConstants.placeholderImagePath,
                         height: 180,
                         width: double.infinity,
                         fit: BoxFit.cover,
                       ),
+                    )
+                  : Image.asset(
+                      AppConstants.placeholderImagePath,
+                      height: 180,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
             ),
             Padding(
               padding: const EdgeInsets.all(12),
@@ -254,7 +250,8 @@ class SimpleEventCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     title,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -262,7 +259,7 @@ class SimpleEventCard extends StatelessWidget {
                   if (location != null)
                     Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.location_on_outlined,
                           size: 16,
                           color: Colors.grey,
@@ -271,7 +268,8 @@ class SimpleEventCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             location!,
-                            style: TextStyle(color: Colors.grey, fontSize: 14),
+                            style: const TextStyle(
+                                color: Colors.grey, fontSize: 14),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -282,7 +280,7 @@ class SimpleEventCard extends StatelessWidget {
                   if (date != null)
                     Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.calendar_today_outlined,
                           size: 16,
                           color: Colors.grey,
@@ -290,7 +288,8 @@ class SimpleEventCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           date!,
-                          style: TextStyle(color: Colors.grey, fontSize: 14),
+                          style:
+                              const TextStyle(color: Colors.grey, fontSize: 14),
                         ),
                       ],
                     ),
@@ -305,10 +304,9 @@ class SimpleEventCard extends StatelessWidget {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color:
-                                isFree!
-                                    ? Colors.green.withOpacity(0.1)
-                                    : Colors.orange.withOpacity(0.1),
+                            color: isFree!
+                                ? Colors.green.withOpacity(0.1)
+                                : Colors.orange.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -374,12 +372,13 @@ class EventSearchBar extends StatelessWidget {
                 hintText: hintText ?? 'Search events...',
                 border: InputBorder.none,
                 isDense: true,
-                icon: Icon(Icons.search),
+                icon: const Icon(Icons.search),
               ),
               onSubmitted: onSearch,
             ),
           ),
-          IconButton(icon: Icon(Icons.filter_list), onPressed: onFilterTap),
+          IconButton(
+              icon: const Icon(Icons.filter_list), onPressed: onFilterTap),
         ],
       ),
     );

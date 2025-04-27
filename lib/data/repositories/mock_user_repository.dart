@@ -1,4 +1,3 @@
-import '../../core/constants/app_constants.dart';
 import '../../data/models/user_model.dart';
 import '../models/follower_model.dart';
 

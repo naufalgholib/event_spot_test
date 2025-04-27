@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
 import '../../core/config/app_router.dart';
-import '../../core/constants/app_constants.dart';
 import '../../core/providers/auth_provider.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -128,7 +127,7 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                       ),
                       const SizedBox(height: 24),
-                      Text(
+                      const Text(
                         'EventSpot',
                         style: TextStyle(
                           color: Colors.white,

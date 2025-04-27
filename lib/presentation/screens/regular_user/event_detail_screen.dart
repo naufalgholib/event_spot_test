@@ -40,7 +40,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   String? _error;
   bool _isLoggedIn = false;
   bool _isRegistered = false;
-  int _currentImageIndex = 0;
+  final int _currentImageIndex = 0;
 
   @override
   void initState() {
@@ -233,8 +233,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   Future<void> _launchMap() async {
-    if (_event == null || _event!.latitude == null || _event!.longitude == null)
+    if (_event == null ||
+        _event!.latitude == null ||
+        _event!.longitude == null) {
       return;
+    }
 
     final url =
         'https://www.google.com/maps/search/?api=1&query=${_event!.latitude},${_event!.longitude}';

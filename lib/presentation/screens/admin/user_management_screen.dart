@@ -185,8 +185,8 @@ class _UserManagementScreenState extends State<UserManagementScreen>
           // Show dialog to add new user
           _showAddUserDialog();
         },
-        child: const Icon(Icons.add),
         backgroundColor: AppTheme.primaryColor,
+        child: const Icon(Icons.add),
       ),
     );
   }
@@ -444,8 +444,8 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                 ),
               );
             },
-            child: const Text('Block'),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Block'),
           ),
         ],
       ),
@@ -477,8 +477,8 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                 ),
               );
             },
-            child: const Text('Delete'),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
           ),
         ],
       ),

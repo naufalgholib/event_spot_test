@@ -8,7 +8,6 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../data/models/event_model.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/repositories/mock_event_repository.dart';
-import '../../../data/repositories/mock_user_repository.dart';
 import '../../widgets/common_widgets.dart';
 import 'event_search_screen.dart';
 import 'user_profile_screen.dart';
@@ -136,13 +135,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       ? NetworkImage(currentUser!.profilePicture!)
                       : null,
                   child: currentUser?.profilePicture == null
-                      ? Icon(Icons.person, size: 30, color: Colors.white)
+                      ? const Icon(Icons.person, size: 30, color: Colors.white)
                       : null,
                 ),
                 const SizedBox(height: 10),
                 Text(
                   currentUser?.name ?? 'Guest User',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -317,7 +316,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Builder(
                   builder: (context) => IconButton(
-                    icon: Icon(Icons.menu),
+                    icon: const Icon(Icons.menu),
                     onPressed: () {
                       Scaffold.of(context).openDrawer();
                     },
@@ -328,11 +327,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Hello, ${currentUser?.name?.split(' ').first ?? 'User'}',
-                        style: TextStyle(fontSize: 16),
+                        'Hello, ${currentUser?.name.split(' ').first ?? 'User'}',
+                        style: const TextStyle(fontSize: 16),
                       ),
                       const SizedBox(height: 4),
-                      Text(
+                      const Text(
                         'Discover Events',
                         style: TextStyle(
                           fontSize: 24,
@@ -343,7 +342,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.notifications_outlined),
+                  icon: const Icon(Icons.notifications_outlined),
                   onPressed: () {
                     Navigator.pushNamed(context, AppRouter.notifications);
                   },
@@ -397,12 +396,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceVariant,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           _categories![index],
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
@@ -411,8 +412,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(
+          const Padding(
+            padding: EdgeInsets.symmetric(
               horizontal: AppConstants.defaultPadding,
             ),
             child: Text(
@@ -429,7 +430,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildEventList() {
     if (_isLoading) {
-      return Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_error != null) {
@@ -437,7 +438,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     if (_events == null || _events!.isEmpty) {
-      return EmptyStateWidget(
+      return const EmptyStateWidget(
         message: 'No events found',
         icon: Icons.event_busy,
       );
@@ -465,7 +466,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildExploreTab() {
-    return EventSearchScreen();
+    return const EventSearchScreen();
   }
 
   Widget _buildSavedTab() {
@@ -481,7 +482,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onRetry: () => setState(() {}),
           );
         } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return EmptyStateWidget(
+          return const EmptyStateWidget(
             message: 'No bookmarked events',
             icon: Icons.bookmark_border,
           );
@@ -574,18 +575,19 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              const Text(
                 'Filter Events',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               IconButton(
-                icon: Icon(Icons.close),
+                icon: const Icon(Icons.close),
                 onPressed: () => Navigator.pop(context),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          Text('Categories', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text('Categories',
+              style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -603,7 +605,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             }).toList(),
           ),
           const SizedBox(height: 16),
-          Text('Price Range', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text('Price Range',
+              style: TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -615,7 +618,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   });
                 },
               ),
-              Text('Show only free events'),
+              const Text('Show only free events'),
             ],
           ),
           Slider(
@@ -646,7 +649,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     _endDate = null;
                   });
                 },
-                child: Text('Reset'),
+                child: const Text('Reset'),
               ),
               AppButton(
                 text: 'Apply Filters',

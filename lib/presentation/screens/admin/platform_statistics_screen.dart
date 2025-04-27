@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:event_spot/core/theme/app_theme.dart';
-import 'dart:math';
 
 class PlatformStatisticsScreen extends StatefulWidget {
   const PlatformStatisticsScreen({Key? key}) : super(key: key);
@@ -446,7 +445,7 @@ class _PlatformStatisticsScreenState extends State<PlatformStatisticsScreen>
 
   Widget _buildUserActivityStats() {
     // Mock data for user activity
-    final Map<String, int> _userActivity = {
+    final Map<String, int> userActivity = {
       'Average Registrations per User': 3,
       'Average Events Attended': 2,
       'Active Users Last 7 Days': 842,
@@ -462,9 +461,9 @@ class _PlatformStatisticsScreenState extends State<PlatformStatisticsScreen>
         mainAxisSpacing: 16,
         childAspectRatio: 1.5,
       ),
-      itemCount: _userActivity.length,
+      itemCount: userActivity.length,
       itemBuilder: (context, index) {
-        final entry = _userActivity.entries.elementAt(index);
+        final entry = userActivity.entries.elementAt(index);
         return _buildStatCard(entry.key, entry.value.toString());
       },
     );
@@ -472,7 +471,7 @@ class _PlatformStatisticsScreenState extends State<PlatformStatisticsScreen>
 
   Widget _buildEventStatsGrid() {
     // Mock data for event statistics
-    final Map<String, dynamic> _eventStats = {
+    final Map<String, dynamic> eventStats = {
       'Average Attendees per Event': 19,
       'Paid Events': '68%',
       'Free Events': '32%',
@@ -488,9 +487,9 @@ class _PlatformStatisticsScreenState extends State<PlatformStatisticsScreen>
         mainAxisSpacing: 16,
         childAspectRatio: 1.5,
       ),
-      itemCount: _eventStats.length,
+      itemCount: eventStats.length,
       itemBuilder: (context, index) {
-        final entry = _eventStats.entries.elementAt(index);
+        final entry = eventStats.entries.elementAt(index);
         return _buildStatCard(entry.key, entry.value.toString());
       },
     );
@@ -527,7 +526,7 @@ class _PlatformStatisticsScreenState extends State<PlatformStatisticsScreen>
 
   Widget _buildPopularEventTimes() {
     // Mock data for popular event times
-    final List<Map<String, dynamic>> _popularTimes = [
+    final List<Map<String, dynamic>> popularTimes = [
       {'day': 'Monday', 'events': 42, 'color': Colors.blue.shade100},
       {'day': 'Tuesday', 'events': 58, 'color': Colors.blue.shade200},
       {'day': 'Wednesday', 'events': 65, 'color': Colors.blue.shade300},
@@ -558,9 +557,9 @@ class _PlatformStatisticsScreenState extends State<PlatformStatisticsScreen>
               Expanded(
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  itemCount: _popularTimes.length,
+                  itemCount: popularTimes.length,
                   itemBuilder: (context, index) {
-                    final item = _popularTimes[index];
+                    final item = popularTimes[index];
                     return Container(
                       width: 100,
                       margin: const EdgeInsets.only(right: 10),

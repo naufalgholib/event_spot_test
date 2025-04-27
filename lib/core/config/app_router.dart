@@ -161,7 +161,7 @@ class AppRouter {
             listen: false,
           );
           if (!authProvider.isLoggedIn) {
-            return LoginScreen();
+            return const LoginScreen();
           }
         }
 
@@ -172,7 +172,7 @@ class AppRouter {
             listen: false,
           );
           if (!authProvider.hasRole('admin')) {
-            return Scaffold(
+            return const Scaffold(
               body: Center(
                 child: Text('Access denied. Admin privileges required.'),
               ),
@@ -187,7 +187,7 @@ class AppRouter {
             listen: false,
           );
           if (!authProvider.hasRole('promotor')) {
-            return Scaffold(
+            return const Scaffold(
               body: Center(
                 child: Text('Access denied. Promoter privileges required.'),
               ),

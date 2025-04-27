@@ -341,7 +341,7 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Tag "${name}" has been added'),
+        content: Text('Tag "$name" has been added'),
         backgroundColor: Colors.green,
       ),
     );
@@ -368,7 +368,7 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Tag "${name}" has been updated'),
+          content: Text('Tag "$name" has been updated'),
           backgroundColor: Colors.blue,
         ),
       );

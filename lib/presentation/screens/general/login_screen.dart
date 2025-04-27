@@ -138,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppConstants.defaultPadding),
             child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: 450),
+              constraints: const BoxConstraints(maxWidth: 450),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -162,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    Text(
+                    const Text(
                       'Welcome Back',
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -184,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _emailController,
                       validator: _validateEmail,
                       keyboardType: TextInputType.emailAddress,
-                      prefixIcon: Icon(Icons.email_outlined),
+                      prefixIcon: const Icon(Icons.email_outlined),
                     ),
 
                     const SizedBox(height: 16),
@@ -196,7 +196,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _passwordController,
                       validator: _validatePassword,
                       obscureText: !_isPasswordVisible,
-                      prefixIcon: Icon(Icons.lock_outline),
+                      prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _isPasswordVisible
@@ -223,7 +223,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 });
                               },
                             ),
-                            Text('Remember me'),
+                            const Text('Remember me'),
                           ],
                         ),
                         TextButton(
@@ -233,7 +233,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               AppRouter.forgotPassword,
                             );
                           },
-                          child: Text('Forgot Password?'),
+                          child: const Text('Forgot Password?'),
                         ),
                       ],
                     ),
@@ -255,7 +255,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       text: TextSpan(
                         style: TextStyle(color: Colors.grey[600], fontSize: 16),
                         children: [
-                          TextSpan(text: "Don't have an account? "),
+                          const TextSpan(text: "Don't have an account? "),
                           TextSpan(
                             text: 'Register',
                             style: TextStyle(

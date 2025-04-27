@@ -5,7 +5,6 @@ import '../../../data/models/category_model.dart';
 import '../../../data/models/event_model.dart';
 import '../../../data/repositories/mock_category_repository.dart';
 import '../../../data/repositories/mock_event_repository.dart';
-import '../../widgets/common_widgets.dart';
 import '../../widgets/event_card.dart';
 
 class EventSearchScreen extends StatefulWidget {
@@ -342,7 +341,7 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppConstants.cardBorderRadius),
         ),
@@ -564,7 +563,7 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(
                     context,
-                  ).colorScheme.onBackground.withOpacity(0.6),
+                  ).colorScheme.onSurface.withOpacity(0.6),
                 ),
           ),
         ],

@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/category_model.dart';
 import '../../../data/repositories/mock_event_repository.dart';
-import '../../../core/config/app_router.dart';
 
 class EventCreationScreen extends StatefulWidget {
   const EventCreationScreen({Key? key}) : super(key: key);
@@ -155,7 +154,7 @@ class _EventCreationScreenState extends State<EventCreationScreen> {
           .name;
 
       final aiDescription = '''
-Join us for an amazing ${eventTitle} event! This ${category.toLowerCase()} event will be an unforgettable experience for all attendees.
+Join us for an amazing $eventTitle event! This ${category.toLowerCase()} event will be an unforgettable experience for all attendees.
 
 Our carefully curated program includes top-notch activities and experiences designed to engage and inspire participants. Whether you're a seasoned enthusiast or new to the world of ${category.toLowerCase()}, this event offers something for everyone.
 
@@ -703,9 +702,9 @@ Don't miss this opportunity to connect with like-minded individuals, learn from 
                   border: Border.all(color: Colors.grey),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Column(
+                child: const Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
+                  children: [
                     Icon(
                       Icons.add_photo_alternate,
                       size: 64,

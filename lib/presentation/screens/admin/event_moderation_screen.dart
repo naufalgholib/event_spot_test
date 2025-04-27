@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:event_spot/core/theme/app_theme.dart';
 import 'package:event_spot/data/models/event_model.dart';
 import 'package:event_spot/data/repositories/mock_event_repository.dart';
 
@@ -493,8 +492,8 @@ class _EventModerationScreenState extends State<EventModerationScreen>
             const SizedBox(height: 16),
             const Text('Please provide a reason:'),
             const SizedBox(height: 8),
-            TextField(
-              decoration: const InputDecoration(
+            const TextField(
+              decoration: InputDecoration(
                 hintText: 'Reason for removal',
                 border: OutlineInputBorder(),
               ),
@@ -512,8 +511,8 @@ class _EventModerationScreenState extends State<EventModerationScreen>
               Navigator.of(context).pop();
               _removeEvent(event);
             },
-            child: const Text('Remove'),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Remove'),
           ),
         ],
       ),

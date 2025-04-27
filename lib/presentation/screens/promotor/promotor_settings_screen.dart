@@ -192,7 +192,8 @@ class _PromotorSettingsScreenState extends State<PromotorSettingsScreen> {
               ? NetworkImage(user.profilePicture!) as ImageProvider
               : null,
           child: user.profilePicture == null
-              ? Icon(Icons.business, color: AppTheme.primaryColor, size: 30)
+              ? const Icon(Icons.business,
+                  color: AppTheme.primaryColor, size: 30)
               : null,
         ),
         const SizedBox(width: 16),

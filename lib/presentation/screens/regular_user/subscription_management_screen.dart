@@ -150,7 +150,7 @@ class _SubscriptionManagementScreenState
     }
 
     if (_followedPromoters.isEmpty) {
-      return EmptyStateWidget(
+      return const EmptyStateWidget(
         message: 'You are not following any promoters yet',
         icon: Icons.people_outline,
       );
