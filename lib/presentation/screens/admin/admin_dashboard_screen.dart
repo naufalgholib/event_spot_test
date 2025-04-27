@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:event_spot/core/theme/app_theme.dart';
 import 'package:event_spot/core/config/app_router.dart';
+import 'package:provider/provider.dart';
+import 'package:event_spot/core/providers/auth_provider.dart';
+import 'package:event_spot/data/models/user_model.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({Key? key}) : super(key: key);
@@ -20,11 +23,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final currentUser = authProvider.currentUser;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Admin Dashboard'),
         elevation: 0,
       ),
+      drawer: _buildDrawer(currentUser),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -41,6 +48,149 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildDrawer(UserModel? currentUser) {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundImage: currentUser?.profilePicture != null
+                      ? NetworkImage(currentUser!.profilePicture!)
+                      : null,
+                  child: currentUser?.profilePicture == null
+                      ? Icon(Icons.person, size: 30, color: Colors.white)
+                      : null,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  currentUser?.name ?? 'Admin User',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (currentUser?.email != null)
+                  Text(
+                    currentUser!.email,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.8),
+                      fontSize: 14,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.dashboard),
+            title: const Text('Dashboard'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushReplacementNamed(context, AppRouter.admin);
+            },
+          ),
+          // Admin Sections
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.people),
+            title: const Text('User Management'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, AppRouter.adminUsers);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.event),
+            title: const Text('Event Moderation'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, AppRouter.adminEvents);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.verified_user),
+            title: const Text('Promoter Verification'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, AppRouter.adminPromoters);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.category),
+            title: const Text('Category Management'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, AppRouter.adminCategories);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.tag),
+            title: const Text('Tag Management'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, AppRouter.adminTags);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.bar_chart),
+            title: const Text('Platform Statistics'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, AppRouter.adminStatistics);
+            },
+          ),
+          // General Options
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.settings),
+            title: const Text('Settings'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, AppRouter.userSettings);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.info),
+            title: const Text('About'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, AppRouter.aboutFAQ);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.contact_mail),
+            title: const Text('Contact Us'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, AppRouter.contact);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.logout),
+            title: const Text('Logout'),
+            onTap: () async {
+              Navigator.pop(context);
+              final authProvider = Provider.of<AuthProvider>(
+                context,
+                listen: false,
+              );
+              await authProvider.logout();
+              Navigator.pushReplacementNamed(context, AppRouter.login);
+            },
+          ),
+        ],
       ),
     );
   }

@@ -80,7 +80,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (mounted) {
           // Redirect based on user type
-          if (authProvider.hasRole('promotor')) {
+          if (authProvider.hasRole('admin')) {
+            Navigator.pushReplacementNamed(context, AppRouter.admin);
+          } else if (authProvider.hasRole('promotor')) {
             // Check if the promotor is verified
             final isVerified =
                 authProvider.currentUser?.promoterDetail?.verificationStatus ==

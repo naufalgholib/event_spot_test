@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:provider/provider.dart';
 import '../../core/config/app_router.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/providers/auth_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   final bool onboardingComplete;
@@ -43,16 +45,37 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    // Navigate to onboarding or home screen after a delay
+    // Navigate to onboarding or home/admin screen after a delay
     Timer(const Duration(seconds: 3), () {
       if (mounted) {
-        print(
-          'Navigating to: ${widget.onboardingComplete ? "HOME" : "ONBOARDING"}',
-        ); // Debug print
-        Navigator.pushReplacementNamed(
-          context,
-          widget.onboardingComplete ? AppRouter.home : AppRouter.onboarding,
-        );
+        if (!widget.onboardingComplete) {
+          Navigator.pushReplacementNamed(context, AppRouter.onboarding);
+        } else {
+          final authProvider =
+              Provider.of<AuthProvider>(context, listen: false);
+
+          if (authProvider.isLoggedIn) {
+            if (authProvider.hasRole('admin')) {
+              Navigator.pushReplacementNamed(context, AppRouter.admin);
+            } else if (authProvider.hasRole('promotor')) {
+              final isVerified = authProvider
+                      .currentUser?.promoterDetail?.verificationStatus ==
+                  'verified';
+
+              if (isVerified) {
+                Navigator.pushReplacementNamed(
+                    context, AppRouter.promoterDashboard);
+              } else {
+                Navigator.pushReplacementNamed(
+                    context, AppRouter.verificationUpload);
+              }
+            } else {
+              Navigator.pushReplacementNamed(context, AppRouter.home);
+            }
+          } else {
+            Navigator.pushReplacementNamed(context, AppRouter.home);
+          }
+        }
       }
     });
   }
