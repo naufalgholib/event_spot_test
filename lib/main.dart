@@ -8,6 +8,12 @@ import 'core/constants/app_constants.dart';
 import 'core/providers/auth_provider.dart';
 import 'core/theme/app_theme.dart';
 
+// Import promoter screens
+import 'presentation/screens/promotor/promotor_dashboard_screen.dart';
+import 'presentation/screens/promotor/event_creation_screen.dart';
+import 'presentation/screens/promotor/event_management_screen.dart';
+import 'presentation/screens/promotor/event_edit_screen.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -57,6 +63,21 @@ class MyApp extends StatelessWidget {
                   onboardingComplete: onboardingComplete,
                 ),
             initialRoute: AppRouter.root,
+            routes: {
+              // Promoter routes
+              '/promotor/dashboard':
+                  (context) => const PromotorDashboardScreen(),
+              '/promotor/create-event':
+                  (context) => const EventCreationScreen(),
+              '/promotor/manage-events':
+                  (context) => const EventManagementScreen(),
+              '/promotor/edit-event': (context) {
+                final args =
+                    ModalRoute.of(context)!.settings.arguments
+                        as Map<String, dynamic>;
+                return EventEditScreen(eventId: args['eventId']);
+              },
+            },
           );
         },
       ),

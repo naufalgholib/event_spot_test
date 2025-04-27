@@ -1,31 +1,25 @@
 class CategoryModel {
   final int id;
   final String name;
-  final String? description;
-  final String? icon;
-  final int? parentId;
-  final String? slug;
-  final bool isActive;
+  final String slug;
+  final String description;
+  final String icon;
 
   CategoryModel({
     required this.id,
     required this.name,
-    this.description,
-    this.icon,
-    this.parentId,
-    this.slug,
-    this.isActive = true,
+    required this.slug,
+    required this.description,
+    required this.icon,
   });
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
     return CategoryModel(
       id: json['id'],
       name: json['name'],
-      description: json['description'],
-      icon: json['icon'],
-      parentId: json['parent_id'],
       slug: json['slug'],
-      isActive: json['is_active'] ?? true,
+      description: json['description'],
+      icon: json['icon'] ?? '',
     );
   }
 
@@ -33,31 +27,25 @@ class CategoryModel {
     return {
       'id': id,
       'name': name,
+      'slug': slug,
       'description': description,
       'icon': icon,
-      'parent_id': parentId,
-      'slug': slug,
-      'is_active': isActive,
     };
   }
 
   CategoryModel copyWith({
     int? id,
     String? name,
+    String? slug,
     String? description,
     String? icon,
-    int? parentId,
-    String? slug,
-    bool? isActive,
   }) {
     return CategoryModel(
       id: id ?? this.id,
       name: name ?? this.name,
+      slug: slug ?? this.slug,
       description: description ?? this.description,
       icon: icon ?? this.icon,
-      parentId: parentId ?? this.parentId,
-      slug: slug ?? this.slug,
-      isActive: isActive ?? this.isActive,
     );
   }
 }

@@ -15,6 +15,11 @@ class AppTheme {
   static const Color onBackgroundColor = Colors.black;
   static const Color onSurfaceColor = Colors.black;
   static const Color onErrorColor = Colors.white;
+  
+  // Additional colors for the analytics dashboard
+  static const Color backgroundLight = Color(0xFFF5F5F5);
+  static const Color textDark = Color(0xFF212121);
+  static const Color secondaryTextLight = Color(0xFF757575);
 
   // Light Theme
   static ThemeData lightTheme = ThemeData(

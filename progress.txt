@@ -1,0 +1,52 @@
+Frontend Pages:
+
+Public Pages (No Login Required) 
+
+Landing Page - Introduction to the platform with featured events - done (onboarding_screen)
+Event Listing Page - List of all events with filters - done (located on home_screen)
+Event Search Results Page - Shows filtered/searched events - done (on home screen)
+Event Detail Page - Complete information about a specific event - done (event_detail_screen)
+Promoter Profile Page - Public view of promoter profiles and their events - done (promotor_profile_screen)
+Category Listing Page - Browse events by categories - done (on home_screen tab explore)
+About/FAQ Page - Platform information - done 
+Contact Page - Contact form and information - done 
+Login Page - User authentication - done
+Registration Page - New user sign-up - done
+Password Recovery Page - For forgotten passwords - done
+
+User Pages (Regular Users)
+
+User Dashboard - Overview of user activity - done
+User Profile Page - Personal information management - done
+User Settings Page - Preferences and notification settings - done Sebagian baru awal nya aja page utamanya , kalua di click edit profile change password dll semuana blm working blm ke route
+My Events Page - Events the user is attending - done
+Bookmarked Events Page - Saved/favorite events - done
+Subscription Management Page - Manage followed promoters/categories - done 
+Notification Center - View and manage notifications - done
+Event Registration Page - Form to register for an event - done
+Payment Page - For paid events - done
+Ticket View/Download Page - Access to event tickets - not yet
+
+Promoter Pages
+
+Promoter Dashboard - Overview of promoter activity - done
+Event Creation Page - Form to create new events - done
+Event Management Page - List of events created by promoter - done
+Event Edit Page - Update existing event details - done
+Attendee Management Page - View and manage event attendees - done
+Comment Management Page - Moderate comments on events - done
+Analytics Dashboard - View event statistics - not yet
+Earnings Report Page - Financial information for paid events - not yet
+Promoter Profile Edit Page - Update company information - done
+Verification Document Upload Page - For promoter verification - done
+
+Admin Pages
+
+Admin Dashboard - Platform overview - not yet
+User Management Page - View and manage all users - not yet
+Promoter Verification Page - Review and approve promoters - not yet
+Event Moderation Page - Review and moderate events - not yet
+Category Management Page - Create and manage event categories - not yet
+Tag Management Page - Create and manage event tags - not yet
+Platform Statistics Page - Overall platform metrics - not yet
+System Settings Page - Configure platform settings - not yet

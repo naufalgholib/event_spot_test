@@ -21,6 +21,14 @@ import '../../presentation/screens/password_recovery_screen.dart';
 import '../../presentation/screens/user_settings_screen.dart';
 import '../../presentation/screens/subscription_management_screen.dart';
 import '../../presentation/screens/edit_profile_screen.dart';
+import '../../presentation/screens/promotor/promotor_dashboard_screen.dart';
+import '../../presentation/screens/promotor/event_creation_screen.dart';
+import '../../presentation/screens/promotor/event_management_screen.dart';
+import '../../presentation/screens/promotor/event_edit_screen.dart';
+import '../../presentation/screens/promotor/attendee_management_screen.dart';
+import '../../presentation/screens/promotor/analytics_dashboard_screen.dart';
+import '../../presentation/screens/promotor/verification_document_upload_screen.dart';
+import '../../presentation/screens/promotor/verification_waiting_screen.dart';
 
 class AppRouter {
   static const String root = '/';
@@ -49,6 +57,7 @@ class AppRouter {
   static const String earningsReport = '/earnings-report';
   static const String promoterProfileEdit = '/promoter-profile-edit';
   static const String verificationUpload = '/verification-upload';
+  static const String verificationWaiting = '/verification-waiting';
   static const String adminDashboard = '/admin-dashboard';
   static const String userManagement = '/user-management';
   static const String promoterVerification = '/promoter-verification';
@@ -224,16 +233,14 @@ class AppRouter {
             return const NotificationsScreen();
 
           case searchResults:
-            final query =
-                args is String
-                    ? args
-                    : args is Map<String, dynamic>
+            final query = args is String
+                ? args
+                : args is Map<String, dynamic>
                     ? args['query'] as String?
                     : null;
-            final categoryId =
-                args is Map<String, dynamic>
-                    ? args['categoryId'] as int?
-                    : null;
+            final categoryId = args is Map<String, dynamic>
+                ? args['categoryId'] as int?
+                : null;
 
             return EventSearchScreen(
               initialQuery: query,
@@ -258,9 +265,78 @@ class AppRouter {
           case editProfile:
             return const EditProfileScreen();
 
+          // Promotor routes
+          case promoterDashboard:
+            return const PromotorDashboardScreen();
+
+          case eventCreation:
+            return const EventCreationScreen();
+
+          case eventManagement:
+            return const EventManagementScreen();
+
+          case eventEdit:
+            if (args is Map<String, dynamic> && args.containsKey('eventId')) {
+              return EventEditScreen(eventId: args['eventId']);
+            }
+            return const Scaffold(
+              body: Center(child: Text('Invalid event ID for editing')),
+            );
+
+          case attendeeManagement:
+            if (args is Map<String, dynamic> && args.containsKey('eventId')) {
+              return AttendeeManagementScreen(eventId: args['eventId']);
+            }
+            return const Scaffold(
+              body: Center(
+                  child: Text('Invalid event ID for attendee management')),
+            );
+
+          case analytics:
+            if (args is Map<String, dynamic> && args.containsKey('eventId')) {
+              return AnalyticsDashboardScreen(eventId: args['eventId']);
+            } else if (args is String) {
+              return AnalyticsDashboardScreen(eventId: args);
+            }
+            return const Scaffold(
+              body: Center(child: Text('Invalid event ID for analytics')),
+            );
+
+          // Verification routes
+          case verificationUpload:
+            return const VerificationDocumentUploadScreen();
+
+          case verificationWaiting:
+            return const VerificationWaitingScreen();
+
           // Add other routes as needed
 
           default:
+            // Check for promotor specific sub-routes
+            if (settings.name?.startsWith('/promotor/') == true) {
+              final path = settings.name?.substring('/promotor/'.length);
+
+              switch (path) {
+                case 'create-event':
+                  return const EventCreationScreen();
+
+                case 'manage-events':
+                  return const EventManagementScreen();
+
+                case 'edit-event':
+                  if (args is Map<String, dynamic> &&
+                      args.containsKey('eventId')) {
+                    return EventEditScreen(eventId: args['eventId']);
+                  }
+                  return const Scaffold(
+                    body: Center(child: Text('Invalid event ID for editing')),
+                  );
+
+                case 'my-events':
+                  return const EventManagementScreen();
+              }
+            }
+
             return Scaffold(
               body: Center(
                 child: Text('No route defined for ${settings.name}'),

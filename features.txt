@@ -1,0 +1,74 @@
+Event Spot  adalah aplikasi multi-platform yang memungkinkan user untuk menemukan, membuat, dan berpartisipasi dalam berbagai acara. tiga jenis pengguna utama: Admin, User Biasa, dan Promotor.
+
+Frontend
+•	Dibangun menggunakan Flutter, yang mendukung pengembangan aplikasi mobile di Android/iOS dan web dalam satu codebase.
+•	User interface akan dioptimalkan untuk mobile experience dengan layout responsif untuk layar kecil dan web dengan layout yang lebih luas dan navigasi berbasis mouse.
+•	Komunikasi dengan back-end dilakukan melalui RESTful API.
+
+Backend
+•	Dibangun menggunakan Laravel sebagai framework PHP untuk logika server-side dan komunikasi dengan database.
+•	Menyediakan RESTful API untuk kebutuhan CRUD (Create, Read, Update, Delete) seperti manajemen user, event, dan notifikasi.
+
+Database
+•	MySQL akan digunakan untuk menyimpan data pengguna, acara, pendaftaran, dan transaksi.
+•	Struktur database akan dioptimalkan untuk mendukung relasi antar entitas dan mempermudah query data.
+
+Integrasi
+•	Maps API untuk integrasi dengan layanan peta untuk menampilkan lokasi acara.
+•	Storage dan camera untuk penyimpanan dan upload media seperti gambar untuk event.
+•	Sistem untuk mengirimkan notifikasi kepada pengguna menggunakan Firebase.
+•	Integrasi dengan OpenAI API atau yang serupa untuk fitur deskripsi acara AI-generated
+•	Integrasi dengan Midtrans untuk payment gateway event berbayar
+
+Keamanan
+•	Menggunakan Laravel Sanctum untuk mengelola autentikasi dan otorisasi.
+•	Implementasi validasi yang ketat di frontend dan backend untuk mencegah input data yang tidak valid.
+•	Penerapan enkripsi untuk data sensitif seperti password dan informasi pembayaran.
+
+Fitur Pada Platform Web dan mobile
+
+Fitur untuk user tanpa login
+•	Melihat daftar event dalam bentuk list vertikal berdasarkan tanggal.
+•	Pencarian event berdasarkan nama dan filter kategori (dengan tombol filter di atas).
+
+Fitur umum
+•	Landing page dengan informasi tentang aplikasi (landing page slider seperti pada mobile untuk intro aplikasi)
+•	Halaman detail acara dengan poster, deskripsi, lokasi, dan waktu
+•	Integrasi peta untuk lokasi acara
+•	Sistem notifikasi web
+•	Halaman profil promotor dengan daftar acara mereka
+•	Halaman kategori acara
+
+Fitur untuk admin
+•	Dashboard admin untuk mengelola semua aspek platform
+•	Manajemen pengguna (verifikasi, suspend, hapus akun)
+•	Manajemen acara (melihat, menghapus acara yang melanggar ketentuan)
+•	Manajemen kategori acara (tambah, edit, hapus)
+•	Monitoring statistik platform (jumlah pengguna, event aktif)
+•	Verifikasi promotor
+•	Membuat dan mengelola kategori event.
+
+Fitur untuk user biasa
+•	Registrasi dan login
+•	Profil pengguna dan pengaturan
+•	Pencarian acara berdasarkan nama dan kategori
+•	Penyaringan acara berdasarkan kriteria tanggal, lokasi, dll
+•	Booking atau attend event gratis maupun berbayar
+•	Pembayaran untuk event berbayar
+•	Komentar pada halaman acara
+•	Bookmark acara favorit
+•	Subscribe atau follow ke promotor atau kategori acara tertentu
+•	Melihat daftar acara yang akan dihadiri
+•	Mengelola notifikasi dan pengingat
+•	Melihat riwayat acara yang pernah dihadiri
+
+Fitur untuk promotor
+•	Pembuatan event baru dengan form lengkap (judul, deskripsi, kategori, lokasi, poster, free atau berbayar)
+•	Pilihan pembuatan deskripsi acara dengan bantuan AI-generated
+•	Pengelolaan acara yang dibuat (edit, hapus)
+•	Upload poster dan detail acara
+•	Manajemen peserta acara
+•	Mengelola komentar pada event mereka.
+•	Melihat statistik acara (jumlah peserta, pageview, interaksi)
+•	Laporan pendapatan untuk acara berbayar
+•	Profil promotor yang dapat diikuti oleh pengguna lain

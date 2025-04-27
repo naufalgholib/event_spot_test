@@ -79,7 +79,23 @@ class _LoginScreenState extends State<LoginScreen> {
         }
 
         if (mounted) {
-          Navigator.pushReplacementNamed(context, AppRouter.home);
+          // Redirect based on user type
+          if (authProvider.hasRole('promotor')) {
+            // Check if the promotor is verified
+            final isVerified =
+                authProvider.currentUser?.promoterDetail?.verificationStatus ==
+                    'verified';
+
+            if (isVerified) {
+              Navigator.pushReplacementNamed(
+                  context, AppRouter.promoterDashboard);
+            } else {
+              Navigator.pushReplacementNamed(
+                  context, AppRouter.verificationUpload);
+            }
+          } else {
+            Navigator.pushReplacementNamed(context, AppRouter.home);
+          }
         }
       } else {
         if (mounted) {
@@ -244,14 +260,13 @@ class _LoginScreenState extends State<LoginScreen> {
                               color: theme.colorScheme.primary,
                               fontWeight: FontWeight.bold,
                             ),
-                            recognizer:
-                                TapGestureRecognizer()
-                                  ..onTap = () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      AppRouter.register,
-                                    );
-                                  },
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                Navigator.pushNamed(
+                                  context,
+                                  AppRouter.register,
+                                );
+                              },
                           ),
                         ],
                       ),

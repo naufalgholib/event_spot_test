@@ -105,7 +105,7 @@ class AuthProvider extends ChangeNotifier {
       // TODO: Call API to update user profile
       // For now, just update the local state
       _currentUser = updatedUser;
-      
+
       // Save updated user data
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
