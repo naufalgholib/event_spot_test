@@ -23,11 +23,6 @@ void main() async {
   final bool onboardingComplete =
       prefs.getBool(AppConstants.onboardingCompleteKey) ?? false;
 
-  // TODO: Initialize Firebase
-  // await Firebase.initializeApp(
-  //   options: DefaultFirebaseOptions.currentPlatform,
-  // );
-
   runApp(MyApp(onboardingComplete: onboardingComplete));
 }
 

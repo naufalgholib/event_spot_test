@@ -31,6 +31,15 @@ import '../../presentation/screens/promotor/verification_document_upload_screen.
 import '../../presentation/screens/promotor/verification_waiting_screen.dart';
 import '../../presentation/screens/promotor/promotor_profile_screen.dart';
 import '../../presentation/screens/promotor/promotor_settings_screen.dart';
+// Admin screen imports
+import '../../presentation/screens/admin/admin_dashboard_screen.dart';
+import '../../presentation/screens/admin/user_management_screen.dart';
+import '../../presentation/screens/admin/promoter_verification_screen.dart';
+import '../../presentation/screens/admin/event_moderation_screen.dart';
+import '../../presentation/screens/admin/category_management_screen.dart';
+import '../../presentation/screens/admin/tag_management_screen.dart';
+import '../../presentation/screens/admin/platform_statistics_screen.dart';
+import '../../presentation/screens/admin/system_settings_screen.dart';
 
 class AppRouter {
   static const String root = '/';
@@ -80,6 +89,16 @@ class AppRouter {
   static const String promotorProfile = '/promotor-profile';
   static const String promotorSettings = '/promotor-settings';
 
+  // Admin routes from AdminRoutes
+  static const String admin = '/admin';
+  static const String adminUsers = '/admin/users';
+  static const String adminPromoters = '/admin/promoters';
+  static const String adminEvents = '/admin/events';
+  static const String adminCategories = '/admin/categories';
+  static const String adminTags = '/admin/tags';
+  static const String adminStatistics = '/admin/statistics';
+  static const String adminSettings = '/admin/settings';
+
   static Route<dynamic> generateRoute(
     RouteSettings settings, {
     bool? onboardingComplete,
@@ -110,6 +129,14 @@ class AppRouter {
       tagManagement,
       platformStatistics,
       systemSettings,
+      admin,
+      adminUsers,
+      adminPromoters,
+      adminEvents,
+      adminCategories,
+      adminTags,
+      adminStatistics,
+      adminSettings,
     };
 
     // Promoter only routes
@@ -319,6 +346,39 @@ class AppRouter {
           case promotorSettings:
             return const PromotorSettingsScreen();
 
+          // Admin routes
+          case admin:
+          case adminDashboard:
+            return const AdminDashboardScreen();
+
+          case adminUsers:
+          case userManagement:
+            return const UserManagementScreen();
+
+          case adminPromoters:
+          case promoterVerification:
+            return const PromoterVerificationScreen();
+
+          case adminEvents:
+          case eventModeration:
+            return const EventModerationScreen();
+
+          case adminCategories:
+          case categoryManagement:
+            return const CategoryManagementScreen();
+
+          case adminTags:
+          case tagManagement:
+            return const TagManagementScreen();
+
+          case adminStatistics:
+          case platformStatistics:
+            return const PlatformStatisticsScreen();
+
+          case adminSettings:
+          case systemSettings:
+            return const SystemSettingsScreen();
+
           // Add other routes as needed
 
           default:
@@ -355,5 +415,22 @@ class AppRouter {
         }
       },
     );
+  }
+
+  // Helper methods from AdminRoutes
+  static bool hasAdminAccess(String userType) {
+    return userType == 'admin';
+  }
+
+  static void redirectIfNotAdmin(BuildContext context, String userType) {
+    if (!hasAdminAccess(userType)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Access denied. Admin privileges required.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      Navigator.of(context).pushReplacementNamed('/');
+    }
   }
 }

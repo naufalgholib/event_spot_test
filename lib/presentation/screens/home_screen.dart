@@ -49,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      final events = await _eventRepository.getEvents();
+      final events = await _eventRepository.getAllEvents();
       final categories = await _eventRepository.getCategoryNames();
 
       if (mounted) {
@@ -86,14 +86,13 @@ class _HomeScreenState extends State<HomeScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder:
-          (context) => FilterBottomSheet(
-            categories: _categories ?? [],
-            onApplyFilters: (filters) {
-              // TODO: Apply filters
-              Navigator.pop(context);
-            },
-          ),
+      builder: (context) => FilterBottomSheet(
+        categories: _categories ?? [],
+        onApplyFilters: (filters) {
+          // TODO: Apply filters
+          Navigator.pop(context);
+        },
+      ),
     );
   }
 
@@ -133,14 +132,12 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundImage:
-                      currentUser?.profilePicture != null
-                          ? NetworkImage(currentUser!.profilePicture!)
-                          : null,
-                  child:
-                      currentUser?.profilePicture == null
-                          ? Icon(Icons.person, size: 30, color: Colors.white)
-                          : null,
+                  backgroundImage: currentUser?.profilePicture != null
+                      ? NetworkImage(currentUser!.profilePicture!)
+                      : null,
+                  child: currentUser?.profilePicture == null
+                      ? Icon(Icons.person, size: 30, color: Colors.white)
+                      : null,
                 ),
                 const SizedBox(height: 10),
                 Text(
@@ -319,13 +316,12 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Row(
               children: [
                 Builder(
-                  builder:
-                      (context) => IconButton(
-                        icon: Icon(Icons.menu),
-                        onPressed: () {
-                          Scaffold.of(context).openDrawer();
-                        },
-                      ),
+                  builder: (context) => IconButton(
+                    icon: Icon(Icons.menu),
+                    onPressed: () {
+                      Scaffold.of(context).openDrawer();
+                    },
+                  ),
                 ),
                 Expanded(
                   child: Column(
@@ -594,18 +590,17 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children:
-                widget.categories.map((category) {
-                  return ChoiceChip(
-                    label: Text(category),
-                    selected: _selectedCategory == category,
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedCategory = selected ? category : null;
-                      });
-                    },
-                  );
-                }).toList(),
+            children: widget.categories.map((category) {
+              return ChoiceChip(
+                label: Text(category),
+                selected: _selectedCategory == category,
+                onSelected: (selected) {
+                  setState(() {
+                    _selectedCategory = selected ? category : null;
+                  });
+                },
+              );
+            }).toList(),
           ),
           const SizedBox(height: 16),
           Text('Price Range', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -629,14 +624,13 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             max: 500,
             divisions: 10,
             label: '\$${_priceRange.round()}',
-            onChanged:
-                !_freeEventsOnly
-                    ? (value) {
-                      setState(() {
-                        _priceRange = value;
-                      });
-                    }
-                    : null,
+            onChanged: !_freeEventsOnly
+                ? (value) {
+                    setState(() {
+                      _priceRange = value;
+                    });
+                  }
+                : null,
           ),
           const SizedBox(height: 16),
           Row(

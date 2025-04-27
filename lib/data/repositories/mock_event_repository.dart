@@ -376,8 +376,7 @@ class MockEventRepository {
   ];
 
   // Get all events
-  Future<List<EventModel>> getEvents() async {
-    // Simulate network delay
+  Future<List<EventModel>> getAllEvents() async {
     await Future.delayed(const Duration(milliseconds: 800));
     return _events;
   }
@@ -431,21 +430,19 @@ class MockEventRepository {
     // Apply text search
     if (query != null && query.isNotEmpty) {
       final lowercaseQuery = query.toLowerCase();
-      filteredEvents =
-          filteredEvents.where((event) {
-            return event.title.toLowerCase().contains(lowercaseQuery) ||
-                event.description.toLowerCase().contains(lowercaseQuery) ||
-                event.locationName.toLowerCase().contains(lowercaseQuery) ||
-                event.promotorName.toLowerCase().contains(lowercaseQuery);
-          }).toList();
+      filteredEvents = filteredEvents.where((event) {
+        return event.title.toLowerCase().contains(lowercaseQuery) ||
+            event.description.toLowerCase().contains(lowercaseQuery) ||
+            event.locationName.toLowerCase().contains(lowercaseQuery) ||
+            event.promotorName.toLowerCase().contains(lowercaseQuery);
+      }).toList();
     }
 
     // Filter by category
     if (categoryId != null) {
-      filteredEvents =
-          filteredEvents.where((event) {
-            return event.categoryId == categoryId;
-          }).toList();
+      filteredEvents = filteredEvents.where((event) {
+        return event.categoryId == categoryId;
+      }).toList();
     }
 
     // Filter by date range
@@ -455,48 +452,44 @@ class MockEventRepository {
 
       switch (dateRange) {
         case 'today':
-          filteredEvents =
-              filteredEvents.where((event) {
-                final eventDate = DateTime(
-                  event.startDate.year,
-                  event.startDate.month,
-                  event.startDate.day,
-                );
-                return eventDate.isAtSameMomentAs(today);
-              }).toList();
+          filteredEvents = filteredEvents.where((event) {
+            final eventDate = DateTime(
+              event.startDate.year,
+              event.startDate.month,
+              event.startDate.day,
+            );
+            return eventDate.isAtSameMomentAs(today);
+          }).toList();
           break;
 
         case 'this_week':
           final weekStart = today.subtract(Duration(days: today.weekday - 1));
           final weekEnd = weekStart.add(const Duration(days: 6));
 
-          filteredEvents =
-              filteredEvents.where((event) {
-                return event.startDate.isAfter(
-                      weekStart.subtract(const Duration(days: 1)),
-                    ) &&
-                    event.startDate.isBefore(
-                      weekEnd.add(const Duration(days: 1)),
-                    );
-              }).toList();
+          filteredEvents = filteredEvents.where((event) {
+            return event.startDate.isAfter(
+                  weekStart.subtract(const Duration(days: 1)),
+                ) &&
+                event.startDate.isBefore(
+                  weekEnd.add(const Duration(days: 1)),
+                );
+          }).toList();
           break;
 
         case 'this_month':
           final monthStart = DateTime(now.year, now.month, 1);
-          final monthEnd =
-              (now.month < 12)
-                  ? DateTime(now.year, now.month + 1, 0)
-                  : DateTime(now.year + 1, 1, 0);
+          final monthEnd = (now.month < 12)
+              ? DateTime(now.year, now.month + 1, 0)
+              : DateTime(now.year + 1, 1, 0);
 
-          filteredEvents =
-              filteredEvents.where((event) {
-                return event.startDate.isAfter(
-                      monthStart.subtract(const Duration(days: 1)),
-                    ) &&
-                    event.startDate.isBefore(
-                      monthEnd.add(const Duration(days: 1)),
-                    );
-              }).toList();
+          filteredEvents = filteredEvents.where((event) {
+            return event.startDate.isAfter(
+                  monthStart.subtract(const Duration(days: 1)),
+                ) &&
+                event.startDate.isBefore(
+                  monthEnd.add(const Duration(days: 1)),
+                );
+          }).toList();
           break;
       }
     }
@@ -518,12 +511,11 @@ class MockEventRepository {
 
     // Filter by availability
     if (onlyAvailable) {
-      filteredEvents =
-          filteredEvents.where((event) {
-            return !event.isFullCapacity &&
-                event.registrationEnd.isAfter(DateTime.now()) &&
-                event.isRegistrationOpen;
-          }).toList();
+      filteredEvents = filteredEvents.where((event) {
+        return !event.isFullCapacity &&
+            event.registrationEnd.isAfter(DateTime.now()) &&
+            event.isRegistrationOpen;
+      }).toList();
     }
 
     // Apply sorting
@@ -635,6 +627,6 @@ class MockEventRepository {
 
     // Simulate fetching bookmarked events
     // In a real app, this would query the backend for the current user's bookmarks
-    return _events.where((event) => event.isBookmarked).toList();
+    return _events.where((event) => event.id % 4 == 0).toList();
   }
 }
