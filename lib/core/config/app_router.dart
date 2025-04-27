@@ -20,6 +20,11 @@ import '../../presentation/screens/contact_screen.dart';
 import '../../presentation/screens/password_recovery_screen.dart';
 import '../../presentation/screens/user_settings_screen.dart';
 import '../../presentation/screens/subscription_management_screen.dart';
+import '../../presentation/screens/user_dashboard_screen.dart';
+import '../../presentation/screens/promoter_dashboard_screen.dart';
+import '../../presentation/screens/event_creation_screen.dart';
+import '../../presentation/screens/event_edit_screen.dart';
+import '../../presentation/screens/event_management_screen.dart';
 
 class AppRouter {
   static const String root = '/';
@@ -28,6 +33,7 @@ class AppRouter {
   static const String forgotPassword = '/forgot-password';
   static const String onboarding = '/onboarding';
   static const String home = '/home';
+  static const String userDashboard = '/user-dashboard';
   static const String eventDetail = '/event-detail';
   static const String userProfile = '/user-profile';
   static const String userSettings = '/user-settings';
@@ -74,6 +80,7 @@ class AppRouter {
 
     // Protected routes that require authentication
     final protectedRoutes = {
+      userDashboard,
       userProfile,
       userSettings,
       userEvents,
@@ -169,6 +176,8 @@ class AppRouter {
             return const OnboardingScreen();
           case home:
             return const HomeScreen();
+          case userDashboard:
+            return const UserDashboardScreen();
           case eventDetail:
             if (args is int) {
               return EventDetailScreen(eventId: args);
@@ -252,6 +261,23 @@ class AppRouter {
 
           case subscriptionManagement:
             return const SubscriptionManagementScreen();
+
+          case promoterDashboard:
+            return const PromoterDashboardScreen();
+
+          case eventCreation:
+            return const EventCreationScreen();
+
+          case eventEdit:
+            if (args is int) {
+              return EventEditScreen(eventId: args);
+            }
+            return const Scaffold(
+              body: Center(child: Text('Invalid event ID')),
+            );
+
+          case eventManagement:
+            return const EventManagementScreen();
 
           // Add other routes as needed
 

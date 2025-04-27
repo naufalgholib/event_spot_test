@@ -637,4 +637,48 @@ class MockEventRepository {
     // In a real app, this would query the backend for the current user's bookmarks
     return _events.where((event) => event.isBookmarked).toList();
   }
+
+  Future<List<EventModel>> getPromoterEvents() async {
+    await Future.delayed(const Duration(milliseconds: 800));
+    // In a real app, this would filter by the current promoter's ID
+    return _events;
+  }
+
+  Future<Map<String, dynamic>> getPromoterStats() async {
+    await Future.delayed(const Duration(milliseconds: 800));
+    // Mock implementation
+    return {
+      'totalEvents': 15,
+      'totalAttendees': 1250,
+      'totalEarnings': 25000.00,
+      'upcomingEvents': 5,
+      'pastEvents': 10,
+    };
+  }
+
+  Future<EventModel> createEvent(EventModel event) async {
+    await Future.delayed(const Duration(milliseconds: 800));
+    _events.add(event);
+    return event;
+  }
+
+  Future<EventModel> updateEvent(EventModel event) async {
+    await Future.delayed(const Duration(milliseconds: 800));
+    final index = _events.indexWhere((e) => e.id == event.id);
+    if (index != -1) {
+      _events[index] = event;
+      return event;
+    }
+    throw Exception('Event not found');
+  }
+
+  Future<void> deleteEvent(int eventId) async {
+    await Future.delayed(const Duration(milliseconds: 800));
+    final index = _events.indexWhere((e) => e.id == eventId);
+    if (index != -1) {
+      _events.removeAt(index);
+    } else {
+      throw Exception('Event not found');
+    }
+  }
 }
