@@ -6,8 +6,10 @@ import '../../../core/config/app_router.dart';
 import '../../../core/config/app_constants.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../data/models/event_model.dart';
+import '../../../data/models/category_model.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/repositories/mock_event_repository.dart';
+import '../../../data/services/category_service.dart';
 import '../../widgets/common_widgets.dart';
 import 'event_search_screen.dart';
 import 'user_profile_screen.dart';
@@ -23,9 +25,10 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   final TextEditingController _searchController = TextEditingController();
   final MockEventRepository _eventRepository = MockEventRepository();
+  final CategoryService _categoryService = CategoryService();
 
   List<EventModel>? _events;
-  List<String>? _categories;
+  List<CategoryModel>? _categories;
   bool _isLoading = true;
   String? _error;
 
@@ -49,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final events = await _eventRepository.getAllEvents();
-      final categories = await _eventRepository.getCategoryNames();
+      final categories = await _categoryService.getCategories();
 
       if (mounted) {
         setState(() {
@@ -61,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Failed to load events. Please try again.';
+          _error = 'Failed to load data. Please try again.';
           _isLoading = false;
         });
       }
@@ -102,7 +105,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       drawer: _buildDrawer(currentUser),
-      body: _buildBody(),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+              ? Center(child: Text(_error!))
+              : _buildBody(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: _onBottomNavTapped,
@@ -378,15 +385,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 itemCount: _categories!.length,
                 itemBuilder: (context, index) {
+                  final category = _categories![index];
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: InkWell(
                       onTap: () {
-                        // Filter by category
                         Navigator.pushNamed(
                           context,
                           AppRouter.searchResults,
-                          arguments: {'categoryId': index + 1},
+                          arguments: {'categoryId': category.id},
                         );
                       },
                       borderRadius: BorderRadius.circular(20),
@@ -402,7 +409,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          _categories![index],
+                          category.name,
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -544,7 +551,7 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class FilterBottomSheet extends StatefulWidget {
-  final List<String> categories;
+  final List<CategoryModel> categories;
   final Function(Map<String, dynamic>) onApplyFilters;
 
   const FilterBottomSheet({
@@ -594,11 +601,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             runSpacing: 8,
             children: widget.categories.map((category) {
               return ChoiceChip(
-                label: Text(category),
-                selected: _selectedCategory == category,
+                label: Text(category.name),
+                selected: _selectedCategory == category.name,
                 onSelected: (selected) {
                   setState(() {
-                    _selectedCategory = selected ? category : null;
+                    _selectedCategory = selected ? category.name : null;
                   });
                 },
               );

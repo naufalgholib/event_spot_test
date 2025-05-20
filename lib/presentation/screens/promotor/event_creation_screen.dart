@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/category_model.dart';
 import '../../../data/repositories/mock_event_repository.dart';
+import '../../../data/services/category_service.dart';
 
 class EventCreationScreen extends StatefulWidget {
   const EventCreationScreen({Key? key}) : super(key: key);
@@ -15,6 +16,7 @@ class EventCreationScreen extends StatefulWidget {
 
 class _EventCreationScreenState extends State<EventCreationScreen> {
   final MockEventRepository _repository = MockEventRepository();
+  final CategoryService _categoryService = CategoryService();
 
   // Form controllers
   final TextEditingController _titleController = TextEditingController();
@@ -64,7 +66,7 @@ class _EventCreationScreenState extends State<EventCreationScreen> {
 
   Future<void> _loadCategories() async {
     try {
-      final categories = await _repository.getCategories();
+      final categories = await _categoryService.getCategories();
       setState(() {
         _categories = categories;
         if (categories.isNotEmpty) {
@@ -76,13 +78,11 @@ class _EventCreationScreenState extends State<EventCreationScreen> {
       setState(() {
         _isLoadingCategories = false;
       });
-      // Show error
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to load categories: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading categories: $e')),
+        );
+      }
     }
   }
 
@@ -330,30 +330,7 @@ Don't miss this opportunity to connect with like-minded individuals, learn from 
             },
           ),
           const SizedBox(height: 16),
-          DropdownButtonFormField<int>(
-            value: _selectedCategoryId,
-            decoration: const InputDecoration(
-              labelText: 'Category *',
-              hintText: 'Select event category',
-            ),
-            items: _categories.map((category) {
-              return DropdownMenuItem<int>(
-                value: category.id,
-                child: Text(category.name),
-              );
-            }).toList(),
-            onChanged: (value) {
-              setState(() {
-                _selectedCategoryId = value;
-              });
-            },
-            validator: (value) {
-              if (value == null) {
-                return 'Please select a category';
-              }
-              return null;
-            },
-          ),
+          _buildCategoryDropdown(),
           const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -422,6 +399,37 @@ Don't miss this opportunity to connect with like-minded individuals, learn from 
       ),
       isActive: _currentStep >= 0,
       state: _currentStep > 0 ? StepState.complete : StepState.indexed,
+    );
+  }
+
+  Widget _buildCategoryDropdown() {
+    if (_isLoadingCategories) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return DropdownButtonFormField<int>(
+      value: _selectedCategoryId,
+      decoration: const InputDecoration(
+        labelText: 'Category',
+        border: OutlineInputBorder(),
+      ),
+      items: _categories.map((category) {
+        return DropdownMenuItem<int>(
+          value: category.id,
+          child: Text(category.name),
+        );
+      }).toList(),
+      onChanged: (value) {
+        setState(() {
+          _selectedCategoryId = value;
+        });
+      },
+      validator: (value) {
+        if (value == null) {
+          return 'Please select a category';
+        }
+        return null;
+      },
     );
   }
 
