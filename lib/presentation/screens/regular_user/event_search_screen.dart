@@ -3,8 +3,8 @@ import '../../../core/config/app_constants.dart';
 import '../../../core/config/app_router.dart';
 import '../../../data/models/category_model.dart';
 import '../../../data/models/event_model.dart';
-import '../../../data/repositories/mock_category_repository.dart';
 import '../../../data/repositories/mock_event_repository.dart';
+import '../../../data/services/category_service.dart';
 import '../../widgets/event_card.dart';
 
 class EventSearchScreen extends StatefulWidget {
@@ -21,7 +21,7 @@ class EventSearchScreen extends StatefulWidget {
 class _EventSearchScreenState extends State<EventSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final MockEventRepository _eventRepository = MockEventRepository();
-  final MockCategoryRepository _categoryRepository = MockCategoryRepository();
+  final CategoryService _categoryService = CategoryService();
 
   String _searchQuery = '';
   int? _selectedCategoryId;
@@ -45,10 +45,18 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
   }
 
   Future<void> _loadCategories() async {
-    final categories = await _categoryRepository.getCategories();
-    setState(() {
-      _categories = categories;
-    });
+    try {
+      final categories = await _categoryService.getCategories();
+      setState(() {
+        _categories = categories;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading categories: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _performSearch() async {
@@ -382,35 +390,7 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      FilterChip(
-                        label: const Text('All'),
-                        selected: _selectedCategoryId == null,
-                        onSelected: (selected) {
-                          if (selected) {
-                            setModalState(() {
-                              _selectedCategoryId = null;
-                            });
-                          }
-                        },
-                      ),
-                      ..._categories.map((category) {
-                        return FilterChip(
-                          label: Text(category.name),
-                          selected: _selectedCategoryId == category.id,
-                          onSelected: (selected) {
-                            setModalState(() {
-                              _selectedCategoryId =
-                                  selected ? category.id : null;
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ],
-                  ),
+                  _buildFilterChips(),
                   const SizedBox(height: 16),
                   Text('Date', style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 8),
@@ -539,6 +519,37 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
           },
         );
       },
+    );
+  }
+
+  Widget _buildFilterChips() {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        FilterChip(
+          label: const Text('All'),
+          selected: _selectedCategoryId == null,
+          onSelected: (selected) {
+            if (selected) {
+              setState(() {
+                _selectedCategoryId = null;
+              });
+            }
+          },
+        ),
+        ..._categories.map((category) {
+          return FilterChip(
+            label: Text(category.name),
+            selected: _selectedCategoryId == category.id,
+            onSelected: (selected) {
+              setState(() {
+                _selectedCategoryId = selected ? category.id : null;
+              });
+            },
+          );
+        }).toList(),
+      ],
     );
   }
 
