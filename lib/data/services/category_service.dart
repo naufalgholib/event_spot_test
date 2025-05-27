@@ -1,19 +1,19 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/category_model.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'auth_token_service.dart';
 
 class CategoryService {
   static const String baseUrl = 'http://127.0.0.1:8000/api';
+  final _tokenService = AuthTokenService();
 
   // Helper method to get auth headers
   Future<Map<String, String>> _getAuthHeaders() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final authHeader = await _tokenService.getAuthHeader();
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'Authorization': 'Bearer $token',
+      'Authorization': authHeader,
     };
   }
 
@@ -54,12 +54,12 @@ class CategoryService {
     try {
       final headers = await _getAuthHeaders();
       final response = await http.post(
-        Uri.parse('$baseUrl/categories'),
+        Uri.parse('$baseUrl/admin/categories'),
         headers: headers,
         body: jsonEncode(category.toJson()),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
         if (responseData == null) {
           throw Exception('Server returned null response');
@@ -91,7 +91,7 @@ class CategoryService {
       };
 
       final response = await http.put(
-        Uri.parse('$baseUrl/categories/$id'),
+        Uri.parse('$baseUrl/admin/categories/$id'),
         headers: headers,
         body: jsonEncode(requestBody),
       );
@@ -122,7 +122,7 @@ class CategoryService {
     try {
       final headers = await _getAuthHeaders();
       final response = await http.delete(
-        Uri.parse('$baseUrl/categories/$id'),
+        Uri.parse('$baseUrl/admin/categories/$id'),
         headers: headers,
       );
 

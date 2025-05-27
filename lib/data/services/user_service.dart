@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/user_model.dart';
+import 'auth_token_service.dart';
 
 class UserService {
   static const String baseUrl = 'http://127.0.0.1:8000/api';
+  final _tokenService = AuthTokenService();
 
   Future<Map<String, dynamic>> register({
     required String name,
@@ -33,6 +35,12 @@ class UserService {
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        // Save token
+        await _tokenService.saveToken(
+          responseData['data']['token'],
+          responseData['data']['token_type'],
+        );
+
         return {
           'user': UserModel.fromJson(responseData['data']['user']),
           'token': responseData['data']['token'],
@@ -69,6 +77,12 @@ class UserService {
         if (responseData['data'] != null &&
             responseData['data']['user'] != null &&
             responseData['data']['token'] != null) {
+          // Save token
+          await _tokenService.saveToken(
+            responseData['data']['token'],
+            responseData['data']['token_type'],
+          );
+
           return {
             'user': UserModel.fromJson(responseData['data']['user']),
             'token': responseData['data']['token'],
@@ -97,5 +111,9 @@ class UserService {
       }
       rethrow;
     }
+  }
+
+  Future<void> logout() async {
+    await _tokenService.clearToken();
   }
 }
