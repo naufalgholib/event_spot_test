@@ -1,9 +1,21 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/category_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CategoryService {
-  static const String baseUrl = 'http://192.168.1.9:8000/api';
+  static const String baseUrl = 'http://127.0.0.1:8000/api';
+
+  // Helper method to get auth headers
+  Future<Map<String, String>> _getAuthHeaders() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+  }
 
   Future<List<CategoryModel>> getCategories() async {
     try {
@@ -40,17 +52,29 @@ class CategoryService {
 
   Future<CategoryModel> createCategory(CategoryModel category) async {
     try {
+      final headers = await _getAuthHeaders();
       final response = await http.post(
         Uri.parse('$baseUrl/categories'),
-        headers: {'Content-Type': 'application/json'},
+        headers: headers,
         body: jsonEncode(category.toJson()),
       );
 
-      if (response.statusCode == 201) {
-        final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        if (responseData == null) {
+          throw Exception('Server returned null response');
+        }
+
+        final data = responseData['data'];
+        if (data == null) {
+          throw Exception('Category data not found in response');
+        }
+
         return CategoryModel.fromJson(data);
       } else {
-        throw Exception('Failed to create category');
+        final errorData = jsonDecode(response.body);
+        throw Exception(
+            'Failed to create category: ${errorData['message'] ?? response.statusCode}');
       }
     } catch (e) {
       throw Exception('Error creating category: $e');
@@ -59,17 +83,35 @@ class CategoryService {
 
   Future<CategoryModel> updateCategory(int id, CategoryModel category) async {
     try {
+      final headers = await _getAuthHeaders();
+      final Map<String, dynamic> requestBody = {
+        'name': category.name,
+        'description': category.description,
+        'icon': category.icon,
+      };
+
       final response = await http.put(
         Uri.parse('$baseUrl/categories/$id'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(category.toJson()),
+        headers: headers,
+        body: jsonEncode(requestBody),
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final responseData = jsonDecode(response.body);
+        if (responseData == null) {
+          throw Exception('Server returned null response');
+        }
+
+        final data = responseData['data'];
+        if (data == null) {
+          throw Exception('Category data not found in response');
+        }
+
         return CategoryModel.fromJson(data);
       } else {
-        throw Exception('Failed to update category');
+        final errorData = jsonDecode(response.body);
+        throw Exception(
+            'Failed to update category: ${errorData['message'] ?? response.statusCode}');
       }
     } catch (e) {
       throw Exception('Error updating category: $e');
@@ -78,10 +120,16 @@ class CategoryService {
 
   Future<void> deleteCategory(int id) async {
     try {
-      final response = await http.delete(Uri.parse('$baseUrl/categories/$id'));
+      final headers = await _getAuthHeaders();
+      final response = await http.delete(
+        Uri.parse('$baseUrl/categories/$id'),
+        headers: headers,
+      );
 
       if (response.statusCode != 200) {
-        throw Exception('Failed to delete category');
+        final errorData = jsonDecode(response.body);
+        throw Exception(
+            'Failed to delete category: ${errorData['message'] ?? response.statusCode}');
       }
     } catch (e) {
       throw Exception('Error deleting category: $e');

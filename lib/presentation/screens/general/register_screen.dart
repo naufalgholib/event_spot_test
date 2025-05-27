@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/config/app_router.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../data/repositories/mock_user_repository.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../data/services/user_service.dart';
 import '../../widgets/common_widgets.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -19,13 +21,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _phoneController = TextEditingController();
 
   bool _isLoading = false;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _acceptTerms = false;
+  String _selectedUserType = 'user'; // Default value
 
-  final _userRepository = MockUserRepository();
+  final _userService = UserService();
 
   @override
   void dispose() {
@@ -33,6 +37,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -85,6 +90,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return null;
   }
 
+  String? _validatePhone(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your phone number';
+    }
+    if (!RegExp(r'^\d{10,13}$').hasMatch(value)) {
+      return 'Please enter a valid phone number';
+    }
+    return null;
+  }
+
   Future<void> _register() async {
     // Validate form
     if (!_formKey.currentState!.validate()) {
@@ -106,13 +121,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
-      final user = await _userRepository.register(
-        _nameController.text,
-        _emailController.text,
-        _passwordController.text,
+      final result = await _userService.register(
+        name: _nameController.text,
+        email: _emailController.text,
+        password: _passwordController.text,
+        passwordConfirmation: _confirmPasswordController.text,
+        phoneNumber: _phoneController.text,
+        userType: _selectedUserType,
       );
 
       if (mounted) {
+        // Update auth provider with the new user data
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        await authProvider.updateUser(result['user']);
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Account created successfully!'),
@@ -120,16 +142,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         );
 
-        // Navigate to home screen
+        // Navigate to appropriate screen based on user type
         Future.delayed(const Duration(seconds: 1), () {
-          Navigator.pushReplacementNamed(context, AppRouter.home);
+          if (_selectedUserType == 'promotor') {
+            Navigator.pushReplacementNamed(
+                context, AppRouter.promoterDashboard);
+          } else {
+            Navigator.pushReplacementNamed(context, AppRouter.home);
+          }
         });
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('An error occurred. Please try again.'),
+          SnackBar(
+            content: Text(e.toString()),
             backgroundColor: Colors.red,
           ),
         );
@@ -185,6 +212,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       validator: _validateEmail,
                       keyboardType: TextInputType.emailAddress,
                       prefixIcon: const Icon(Icons.email_outlined),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Phone field
+                    AppTextField(
+                      label: 'Phone Number',
+                      hintText: 'Enter your phone number',
+                      controller: _phoneController,
+                      validator: _validatePhone,
+                      keyboardType: TextInputType.phone,
+                      prefixIcon: const Icon(Icons.phone_outlined),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // User Type Selection
+                    DropdownButtonFormField<String>(
+                      value: _selectedUserType,
+                      decoration: InputDecoration(
+                        labelText: 'Account Type',
+                        prefixIcon: const Icon(Icons.account_circle_outlined),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'user',
+                          child: Text('Regular User'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'promotor',
+                          child: Text('Event Promotor'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            _selectedUserType = value;
+                          });
+                        }
+                      },
                     ),
 
                     const SizedBox(height: 16),
@@ -250,21 +320,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   text: 'Terms & Conditions',
                                   style: TextStyle(
                                     color: theme.colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () {
-                                      // TODO: Show terms and conditions
-                                    },
-                                ),
-                                const TextSpan(text: ' and '),
-                                TextSpan(
-                                  text: 'Privacy Policy',
-                                  style: TextStyle(
-                                    color: theme.colorScheme.primary,
-                                  ),
-                                  recognizer: TapGestureRecognizer()
-                                    ..onTap = () {
-                                      // TODO: Show privacy policy
+                                      // TODO: Navigate to terms and conditions
                                     },
                                 ),
                               ],
@@ -277,37 +337,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 24),
 
                     // Register button
-                    AppButton(
-                      text: 'Create Account',
-                      onPressed: _register,
-                      isLoading: _isLoading,
+                    ElevatedButton(
+                      onPressed: _isLoading ? null : _register,
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text('Create Account'),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
                     // Login link
-                    RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                        children: [
-                          const TextSpan(text: 'Already have an account? '),
-                          TextSpan(
-                            text: 'Login',
-                            style: TextStyle(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () {
-                                Navigator.pushReplacementNamed(
-                                  context,
-                                  AppRouter.login,
-                                );
-                              },
-                          ),
-                        ],
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Already have an account? ',
+                          style: TextStyle(color: Colors.grey[700]),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pushReplacementNamed(
+                                context, AppRouter.login);
+                          },
+                          child: const Text('Login'),
+                        ),
+                      ],
                     ),
                   ],
                 ),

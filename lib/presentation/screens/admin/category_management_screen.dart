@@ -123,13 +123,17 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         final newCategory = CategoryModel(
           id: 0,
           name: result['name']!,
-          slug: result['name']!.toLowerCase().replaceAll(' ', '_'),
           description: result['description']!,
           icon: result['icon']!,
         );
 
         await _categoryService.createCategory(newCategory);
-        _loadCategories();
+        if (mounted) {
+          await _loadCategories();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Category created successfully')),
+          );
+        }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -220,13 +224,19 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         final updatedCategory = CategoryModel(
           id: category.id,
           name: result['name']!,
-          slug: result['name']!.toLowerCase().replaceAll(' ', '_'),
           description: result['description']!,
           icon: result['icon']!,
         );
 
-        await _categoryService.updateCategory(category.id, updatedCategory);
-        _loadCategories();
+        final categoryId = category.id;
+        await _categoryService.updateCategory(categoryId, updatedCategory);
+
+        if (mounted) {
+          await _loadCategories();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Category updated successfully')),
+          );
+        }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -259,7 +269,12 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     if (confirmed == true) {
       try {
         await _categoryService.deleteCategory(category.id);
-        _loadCategories();
+        if (mounted) {
+          await _loadCategories();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Category deleted successfully')),
+          );
+        }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/gestures.dart';
 
 import '../../../core/config/app_router.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../data/services/user_service.dart';
 import '../../widgets/common_widgets.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -23,6 +23,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _isPasswordVisible = false;
   bool _rememberMe = false;
+
+  final _userService = UserService();
 
   @override
   void dispose() {
@@ -68,52 +70,46 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
+      final result = await _userService.login(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.login(_emailController.text, _passwordController.text);
+      await authProvider.updateUser(result['user']);
 
-      if (authProvider.currentUser != null) {
-        // Save login state if remember me is checked
-        if (_rememberMe) {
-          final preferences = await SharedPreferences.getInstance();
-          await preferences.setBool('is_logged_in', true);
-        }
+      // Save login state if remember me is checked
+      if (_rememberMe) {
+        final preferences = await SharedPreferences.getInstance();
+        await preferences.setBool('is_logged_in', true);
+      }
 
-        if (mounted) {
-          // Redirect based on user type
-          if (authProvider.hasRole('admin')) {
-            Navigator.pushReplacementNamed(context, AppRouter.admin);
-          } else if (authProvider.hasRole('promotor')) {
-            // Check if the promotor is verified
-            final isVerified =
-                authProvider.currentUser?.promoterDetail?.verificationStatus ==
-                    'verified';
+      if (mounted) {
+        // Redirect based on user type
+        if (authProvider.hasRole('admin')) {
+          Navigator.pushReplacementNamed(context, AppRouter.admin);
+        } else if (authProvider.hasRole('promotor')) {
+          // Check if the promotor is verified
+          final isVerified =
+              authProvider.currentUser?.promoterDetail?.verificationStatus ==
+                  'verified';
 
-            if (isVerified) {
-              Navigator.pushReplacementNamed(
-                  context, AppRouter.promoterDashboard);
-            } else {
-              Navigator.pushReplacementNamed(
-                  context, AppRouter.verificationUpload);
-            }
+          if (isVerified) {
+            Navigator.pushReplacementNamed(
+                context, AppRouter.promoterDashboard);
           } else {
-            Navigator.pushReplacementNamed(context, AppRouter.home);
+            Navigator.pushReplacementNamed(
+                context, AppRouter.verificationUpload);
           }
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Invalid email or password'),
-              backgroundColor: Colors.red,
-            ),
-          );
+        } else {
+          Navigator.pushReplacementNamed(context, AppRouter.home);
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('An error occurred. Please try again.'),
+          SnackBar(
+            content: Text(e.toString()),
             backgroundColor: Colors.red,
           ),
         );
@@ -241,37 +237,37 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 24),
 
                     // Login button
-                    AppButton(
-                      text: 'Login',
-                      onPressed: _login,
-                      isLoading: _isLoading,
+                    ElevatedButton(
+                      onPressed: _isLoading ? null : _login,
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text('Login'),
                     ),
 
                     const SizedBox(height: 24),
 
                     // Register link
-                    RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                        children: [
-                          const TextSpan(text: "Don't have an account? "),
-                          TextSpan(
-                            text: 'Register',
-                            style: TextStyle(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () {
-                                Navigator.pushNamed(
-                                  context,
-                                  AppRouter.register,
-                                );
-                              },
-                          ),
-                        ],
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Don\'t have an account? ',
+                          style: TextStyle(color: Colors.grey[700]),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pushReplacementNamed(
+                                context, AppRouter.register);
+                          },
+                          child: const Text('Register'),
+                        ),
+                      ],
                     ),
                   ],
                 ),
