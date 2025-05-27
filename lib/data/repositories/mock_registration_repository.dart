@@ -78,10 +78,9 @@ class MockRegistrationRepository {
       paymentMethod: paymentMethod,
       paymentId: paymentId,
       status: paymentStatus == 'completed' ? 'confirmed' : registration.status,
-      ticketNumber:
-          paymentStatus == 'completed'
-              ? _generateTicketNumber(registration.eventId, registration.id)
-              : registration.ticketNumber,
+      ticketNumber: paymentStatus == 'completed'
+          ? _generateTicketNumber(registration.eventId, registration.id)
+          : registration.ticketNumber,
       updatedAt: DateTime.now(),
     );
 

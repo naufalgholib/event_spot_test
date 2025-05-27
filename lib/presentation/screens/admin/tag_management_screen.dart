@@ -1,91 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:event_spot/core/theme/app_theme.dart';
-import 'package:event_spot/data/models/event_model.dart';
+import '../../../data/models/event_tag_model.dart';
+import '../../../data/services/event_tag_service.dart';
+import '../../../core/theme/app_theme.dart';
 
 class TagManagementScreen extends StatefulWidget {
-  const TagManagementScreen({Key? key}) : super(key: key);
+  const TagManagementScreen({super.key});
 
   @override
   State<TagManagementScreen> createState() => _TagManagementScreenState();
 }
 
 class _TagManagementScreenState extends State<TagManagementScreen> {
+  final EventTagService _tagService = EventTagService();
+  List<EventTagModel> _tags = [];
   bool _isLoading = false;
-  List<EventTag> _tags = [];
-
-  // Mock data for tags
-  final List<EventTag> _mockTags = [
-    EventTag(
-      id: 1,
-      name: 'Festival',
-      slug: 'festival',
-      createdAt: DateTime.now().subtract(const Duration(days: 90)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 90)),
-    ),
-    EventTag(
-      id: 2,
-      name: 'Concert',
-      slug: 'concert',
-      createdAt: DateTime.now().subtract(const Duration(days: 85)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 85)),
-    ),
-    EventTag(
-      id: 3,
-      name: 'Technology',
-      slug: 'technology',
-      createdAt: DateTime.now().subtract(const Duration(days: 80)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 80)),
-    ),
-    EventTag(
-      id: 4,
-      name: 'Conference',
-      slug: 'conference',
-      createdAt: DateTime.now().subtract(const Duration(days: 75)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 75)),
-    ),
-    EventTag(
-      id: 5,
-      name: 'Workshop',
-      slug: 'workshop',
-      createdAt: DateTime.now().subtract(const Duration(days: 70)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 70)),
-    ),
-    EventTag(
-      id: 6,
-      name: 'Charity',
-      slug: 'charity',
-      createdAt: DateTime.now().subtract(const Duration(days: 65)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 65)),
-    ),
-    EventTag(
-      id: 7,
-      name: 'Sports',
-      slug: 'sports',
-      createdAt: DateTime.now().subtract(const Duration(days: 60)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 60)),
-    ),
-    EventTag(
-      id: 8,
-      name: 'Food',
-      slug: 'food',
-      createdAt: DateTime.now().subtract(const Duration(days: 55)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 55)),
-    ),
-    EventTag(
-      id: 9,
-      name: 'Art',
-      slug: 'art',
-      createdAt: DateTime.now().subtract(const Duration(days: 50)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 50)),
-    ),
-    EventTag(
-      id: 10,
-      name: 'Networking',
-      slug: 'networking',
-      createdAt: DateTime.now().subtract(const Duration(days: 45)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 45)),
-    ),
-  ];
+  String? _error;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -93,19 +23,199 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
     _loadTags();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadTags() async {
     setState(() {
       _isLoading = true;
+      _error = null;
     });
 
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 800));
+    try {
+      final tags = await _tagService.getEventTags();
+      setState(() {
+        _tags = tags;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
 
-    // In a real app, this would fetch tags from the server
-    setState(() {
-      _tags = List.from(_mockTags);
-      _isLoading = false;
-    });
+  void _filterTags(String query) {
+    if (query.isEmpty) {
+      _loadTags();
+    } else {
+      setState(() {
+        _tags = _tags
+            .where((tag) =>
+                tag.name.toLowerCase().contains(query.toLowerCase()) ||
+                tag.slug.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      });
+    }
+  }
+
+  Future<void> _showAddEditDialog([EventTagModel? tag]) async {
+    final nameController = TextEditingController(text: tag?.name);
+    final formKey = GlobalKey<FormState>();
+
+    final result = await showDialog<Map<String, String>>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(tag == null ? 'Add New Tag' : 'Edit Tag'),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: nameController,
+            decoration: const InputDecoration(
+              labelText: 'Tag Name',
+              border: OutlineInputBorder(),
+            ),
+            textCapitalization: TextCapitalization.words,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter a tag name';
+              }
+              return null;
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                Navigator.pop(context, {'name': nameController.text});
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null) {
+      try {
+        setState(() {
+          _isLoading = true;
+          _error = null;
+        });
+
+        if (tag == null) {
+          // Create new tag
+          final newTag = EventTagModel(
+            id: 0,
+            name: result['name']!,
+            slug: '',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
+          await _tagService.createEventTag(newTag);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Tag "${result['name']}" has been added'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          // Update existing tag
+          final updatedTag = EventTagModel(
+            id: tag.id,
+            name: result['name']!,
+            slug: tag.slug,
+            createdAt: tag.createdAt,
+            updatedAt: DateTime.now(),
+          );
+          await _tagService.updateEventTag(tag.id, updatedTag);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Tag "${result['name']}" has been updated'),
+              backgroundColor: Colors.blue,
+            ),
+          );
+        }
+
+        await _loadTags();
+      } catch (e) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteTag(EventTagModel tag) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Tag'),
+        content: Text(
+          'Are you sure you want to delete the tag "${tag.name}"? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        setState(() {
+          _isLoading = true;
+          _error = null;
+        });
+
+        await _tagService.deleteEventTag(tag.id);
+        await _loadTags();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Tag "${tag.name}" has been deleted'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } catch (e) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
   }
 
   @override
@@ -116,19 +226,37 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadTags,
-              child: Column(
-                children: [
-                  _buildSearchBar(),
-                  Expanded(
-                    child: _buildTagsList(),
+          : _error != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Error: $_error',
+                        style: const TextStyle(color: Colors.red),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _loadTags,
+                        child: const Text('Retry'),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                )
+              : RefreshIndicator(
+                  onRefresh: _loadTags,
+                  child: Column(
+                    children: [
+                      _buildSearchBar(),
+                      Expanded(
+                        child: _buildTagsList(),
+                      ),
+                    ],
+                  ),
+                ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _showAddTagDialog,
+        onPressed: () => _showAddEditDialog(),
         backgroundColor: AppTheme.primaryColor,
         child: const Icon(Icons.add),
       ),
@@ -139,6 +267,7 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: TextField(
+        controller: _searchController,
         decoration: InputDecoration(
           hintText: 'Search tags...',
           prefixIcon: const Icon(Icons.search),
@@ -147,22 +276,7 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
           ),
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
         ),
-        onChanged: (value) {
-          // Filter tags based on search query
-          if (value.isEmpty) {
-            setState(() {
-              _tags = List.from(_mockTags);
-            });
-          } else {
-            setState(() {
-              _tags = _mockTags
-                  .where((tag) =>
-                      tag.name.toLowerCase().contains(value.toLowerCase()) ||
-                      tag.slug.toLowerCase().contains(value.toLowerCase()))
-                  .toList();
-            });
-          }
-        },
+        onChanged: _filterTags,
       ),
     );
   }
@@ -206,12 +320,12 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
               children: [
                 IconButton(
                   icon: const Icon(Icons.edit, color: Colors.blue),
-                  onPressed: () => _showEditTagDialog(tag),
+                  onPressed: () => _showAddEditDialog(tag),
                   tooltip: 'Edit',
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _showDeleteTagDialog(tag),
+                  onPressed: () => _deleteTag(tag),
                   tooltip: 'Delete',
                 ),
               ],
@@ -219,176 +333,6 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
           ),
         );
       },
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
-  }
-
-  void _showAddTagDialog() {
-    final TextEditingController nameController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add New Tag'),
-        content: TextField(
-          controller: nameController,
-          decoration: const InputDecoration(
-            labelText: 'Tag Name',
-            border: OutlineInputBorder(),
-          ),
-          textCapitalization: TextCapitalization.words,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty) {
-                _addTag(nameController.text);
-                Navigator.of(context).pop();
-              }
-            },
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showEditTagDialog(EventTag tag) {
-    final TextEditingController nameController =
-        TextEditingController(text: tag.name);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Tag'),
-        content: TextField(
-          controller: nameController,
-          decoration: const InputDecoration(
-            labelText: 'Tag Name',
-            border: OutlineInputBorder(),
-          ),
-          textCapitalization: TextCapitalization.words,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty) {
-                _updateTag(tag.id, nameController.text);
-                Navigator.of(context).pop();
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showDeleteTagDialog(EventTag tag) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Tag'),
-        content: Text(
-          'Are you sure you want to delete the tag "${tag.name}"? This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _deleteTag(tag.id);
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _addTag(String name) {
-    // In a real app, this would make an API call
-    final String slug = name.toLowerCase().replaceAll(' ', '-');
-    final newTag = EventTag(
-      id: _mockTags.isNotEmpty
-          ? _mockTags.map((t) => t.id).reduce((a, b) => a > b ? a : b) + 1
-          : 1,
-      name: name,
-      slug: slug,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
-
-    setState(() {
-      _mockTags.add(newTag);
-      _tags = List.from(_mockTags);
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Tag "$name" has been added'),
-        backgroundColor: Colors.green,
-      ),
-    );
-  }
-
-  void _updateTag(int id, String name) {
-    // In a real app, this would make an API call
-    final index = _mockTags.indexWhere((t) => t.id == id);
-    if (index != -1) {
-      final tag = _mockTags[index];
-      final String slug = name.toLowerCase().replaceAll(' ', '-');
-      final updatedTag = EventTag(
-        id: id,
-        name: name,
-        slug: slug,
-        createdAt: tag.createdAt,
-        updatedAt: DateTime.now(),
-      );
-
-      setState(() {
-        _mockTags[index] = updatedTag;
-        _tags = List.from(_mockTags);
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Tag "$name" has been updated'),
-          backgroundColor: Colors.blue,
-        ),
-      );
-    }
-  }
-
-  void _deleteTag(int id) {
-    // In a real app, this would make an API call
-    final tag = _mockTags.firstWhere((t) => t.id == id);
-
-    setState(() {
-      _mockTags.removeWhere((t) => t.id == id);
-      _tags = List.from(_mockTags);
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Tag "${tag.name}" has been deleted'),
-        backgroundColor: Colors.red,
-      ),
     );
   }
 }

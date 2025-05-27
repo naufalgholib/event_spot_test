@@ -146,7 +146,6 @@ class _EventCreationScreenState extends State<EventCreationScreen> {
             orElse: () => CategoryModel(
               id: 0,
               name: 'Unknown',
-              slug: 'unknown',
               description: '',
               icon: '',
             ),
