@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/category_model.dart';
 import 'auth_token_service.dart';
+import '../../core/config/app_constants.dart';
 
 class CategoryService {
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
   final _tokenService = AuthTokenService();
 
   // Helper method to get auth headers
@@ -19,7 +19,8 @@ class CategoryService {
 
   Future<List<CategoryModel>> getCategories() async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/categories'));
+      final response =
+          await http.get(Uri.parse('${AppConstants.baseUrl}/categories'));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -37,7 +38,8 @@ class CategoryService {
 
   Future<CategoryModel> getCategoryById(int id) async {
     try {
-      final response = await http.get(Uri.parse('$baseUrl/categories/$id'));
+      final response =
+          await http.get(Uri.parse('${AppConstants.baseUrl}/categories/$id'));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -54,7 +56,7 @@ class CategoryService {
     try {
       final headers = await _getAuthHeaders();
       final response = await http.post(
-        Uri.parse('$baseUrl/admin/categories'),
+        Uri.parse('${AppConstants.baseUrl}/admin/categories'),
         headers: headers,
         body: jsonEncode(category.toJson()),
       );
@@ -91,7 +93,7 @@ class CategoryService {
       };
 
       final response = await http.put(
-        Uri.parse('$baseUrl/admin/categories/$id'),
+        Uri.parse('${AppConstants.baseUrl}/admin/categories/$id'),
         headers: headers,
         body: jsonEncode(requestBody),
       );
@@ -122,7 +124,7 @@ class CategoryService {
     try {
       final headers = await _getAuthHeaders();
       final response = await http.delete(
-        Uri.parse('$baseUrl/admin/categories/$id'),
+        Uri.parse('${AppConstants.baseUrl}/admin/categories/$id'),
         headers: headers,
       );
 

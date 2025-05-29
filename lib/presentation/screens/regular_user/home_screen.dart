@@ -8,8 +8,8 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../data/models/event_model.dart';
 import '../../../data/models/category_model.dart';
 import '../../../data/models/user_model.dart';
-import '../../../data/repositories/mock_event_repository.dart';
 import '../../../data/services/category_service.dart';
+import '../../../data/services/event_service.dart';
 import '../../widgets/common_widgets.dart';
 import 'event_search_screen.dart';
 import 'user_profile_screen.dart';
@@ -24,10 +24,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   final TextEditingController _searchController = TextEditingController();
-  final MockEventRepository _eventRepository = MockEventRepository();
   final CategoryService _categoryService = CategoryService();
+  final EventService _eventService = EventService();
 
-  List<EventModel>? _events;
+  List<EventModel> _events = [];
+  List<EventModel> _filteredEvents = [];
   List<CategoryModel>? _categories;
   bool _isLoading = true;
   String? _error;
@@ -51,12 +52,13 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      final events = await _eventRepository.getAllEvents();
+      final events = await _eventService.getEvents();
       final categories = await _categoryService.getCategories();
 
       if (mounted) {
         setState(() {
           _events = events;
+          _filteredEvents = events;
           _categories = categories;
           _isLoading = false;
         });
@@ -64,10 +66,41 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Failed to load data. Please try again.';
+          _error = 'Failed to load data: ${e.toString()}';
           _isLoading = false;
         });
       }
+    }
+  }
+
+  void _filterEvents(String query) {
+    if (query.isEmpty) {
+      setState(() {
+        _filteredEvents = _events;
+      });
+      return;
+    }
+
+    final lowercaseQuery = query.toLowerCase();
+    final filtered = _events.where((event) {
+      return event.title.toLowerCase().contains(lowercaseQuery) ||
+          event.description.toLowerCase().contains(lowercaseQuery) ||
+          event.locationName.toLowerCase().contains(lowercaseQuery) ||
+          event.categoryName.toLowerCase().contains(lowercaseQuery);
+    }).toList();
+
+    setState(() {
+      _filteredEvents = filtered;
+    });
+  }
+
+  void _onSearch(String query) {
+    if (query.isEmpty) {
+      setState(() {
+        _filteredEvents = _events;
+      });
+    } else {
+      _filterEvents(query);
     }
   }
 
@@ -363,13 +396,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: EventSearchBar(
               controller: _searchController,
-              onSearch: (query) {
-                Navigator.pushNamed(
-                  context,
-                  AppRouter.searchResults,
-                  arguments: query,
-                );
-              },
+              onSearch: _onSearch,
               onFilterTap: _showFilterDialog,
             ),
           ),
@@ -444,7 +471,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return ErrorStateWidget(message: _error!, onRetry: _loadData);
     }
 
-    if (_events == null || _events!.isEmpty) {
+    if (_filteredEvents.isEmpty) {
       return const EmptyStateWidget(
         message: 'No events found',
         icon: Icons.event_busy,
@@ -453,9 +480,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return ListView.builder(
       padding: const EdgeInsets.all(AppConstants.defaultPadding),
-      itemCount: _events!.length,
+      itemCount: _filteredEvents.length,
       itemBuilder: (context, index) {
-        final event = _events![index];
+        final event = _filteredEvents[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: SimpleEventCard(
@@ -479,7 +506,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildSavedTab() {
     // Load and display bookmarked events
     return FutureBuilder<List<EventModel>>(
-      future: _eventRepository.getBookmarkedEvents(),
+      future: _eventService.getBookmarkedEvents(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../../core/config/app_constants.dart';
 import '../../../core/config/app_router.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../data/models/category_model.dart';
 import '../../../data/models/event_model.dart';
 import '../../../data/repositories/mock_event_repository.dart';
+import '../../../data/services/event_service.dart';
 import '../../../data/services/category_service.dart';
 import '../../widgets/event_card.dart';
+import '../../widgets/common_widgets.dart';
 
 class EventSearchScreen extends StatefulWidget {
   final String? initialQuery;
@@ -19,76 +22,27 @@ class EventSearchScreen extends StatefulWidget {
 }
 
 class _EventSearchScreenState extends State<EventSearchScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  final MockEventRepository _eventRepository = MockEventRepository();
+  final EventService _eventService = EventService();
   final CategoryService _categoryService = CategoryService();
-
-  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+  bool _isLoading = false;
+  String? _error;
+  List<EventModel> _allEvents = [];
+  List<EventModel> _filteredEvents = [];
+  List<CategoryModel> _categories = [];
   int? _selectedCategoryId;
   String _selectedDateRange = 'all';
   String _selectedPriceRange = 'all';
   String _sortBy = 'date_asc';
   bool _onlyAvailable = false;
-  bool _isLoading = false;
-
-  List<EventModel> _searchResults = [];
-  List<CategoryModel> _categories = [];
 
   @override
   void initState() {
     super.initState();
-    _searchQuery = widget.initialQuery ?? '';
+    _searchController.text = widget.initialQuery ?? '';
     _selectedCategoryId = widget.categoryId;
-    _searchController.text = _searchQuery;
     _loadCategories();
-    _performSearch();
-  }
-
-  Future<void> _loadCategories() async {
-    try {
-      final categories = await _categoryService.getCategories();
-      setState(() {
-        _categories = categories;
-      });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading categories: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _performSearch() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final results = await _eventRepository.searchEvents(
-        query: _searchQuery.isEmpty ? null : _searchQuery,
-        categoryId: _selectedCategoryId,
-        dateRange: _selectedDateRange == 'all' ? null : _selectedDateRange,
-        priceRange: _selectedPriceRange == 'all' ? null : _selectedPriceRange,
-        sortBy: _sortBy,
-        onlyAvailable: _onlyAvailable,
-      );
-
-      setState(() {
-        _searchResults = results;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
-      }
-    }
+    _loadAllEvents();
   }
 
   @override
@@ -97,11 +51,150 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
     super.dispose();
   }
 
+  Future<void> _loadCategories() async {
+    try {
+      final categories = await _categoryService.getCategories();
+      if (mounted) {
+        setState(() {
+          _categories = categories;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+        });
+      }
+    }
+  }
+
+  Future<void> _loadAllEvents() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final events = await _eventService.getEvents();
+      if (mounted) {
+        setState(() {
+          _allEvents = events;
+          _filteredEvents = events;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _filterEvents() {
+    List<EventModel> filtered = List.from(_allEvents);
+
+    // Filter by search query
+    if (_searchController.text.isNotEmpty) {
+      final query = _searchController.text.toLowerCase();
+      filtered = filtered.where((event) {
+        return event.title.toLowerCase().contains(query) ||
+            event.description.toLowerCase().contains(query) ||
+            event.locationName.toLowerCase().contains(query) ||
+            event.categoryName.toLowerCase().contains(query);
+      }).toList();
+    }
+
+    // Filter by category
+    if (_selectedCategoryId != null) {
+      filtered = filtered
+          .where((event) => event.categoryId == _selectedCategoryId)
+          .toList();
+    }
+
+    // Filter by date range
+    if (_selectedDateRange != 'all') {
+      final now = DateTime.now();
+      filtered = filtered.where((event) {
+        switch (_selectedDateRange) {
+          case 'today':
+            return event.startDate.year == now.year &&
+                event.startDate.month == now.month &&
+                event.startDate.day == now.day;
+          case 'this_week':
+            final weekStart = now.subtract(Duration(days: now.weekday - 1));
+            final weekEnd = weekStart.add(const Duration(days: 7));
+            return event.startDate.isAfter(weekStart) &&
+                event.startDate.isBefore(weekEnd);
+          case 'this_month':
+            return event.startDate.year == now.year &&
+                event.startDate.month == now.month;
+          default:
+            return true;
+        }
+      }).toList();
+    }
+
+    // Filter by price range
+    if (_selectedPriceRange != 'all') {
+      filtered = filtered.where((event) {
+        switch (_selectedPriceRange) {
+          case 'free':
+            return event.isFree;
+          case 'paid':
+            return !event.isFree;
+          default:
+            return true;
+        }
+      }).toList();
+    }
+
+    // Filter by availability
+    if (_onlyAvailable) {
+      filtered = filtered.where((event) => !event.isFullCapacity).toList();
+    }
+
+    // Sort events
+    switch (_sortBy) {
+      case 'date_asc':
+        filtered.sort((a, b) => a.startDate.compareTo(b.startDate));
+        break;
+      case 'date_desc':
+        filtered.sort((a, b) => b.startDate.compareTo(a.startDate));
+        break;
+      case 'price_asc':
+        filtered.sort((a, b) => (a.price ?? 0).compareTo(b.price ?? 0));
+        break;
+      case 'price_desc':
+        filtered.sort((a, b) => (b.price ?? 0).compareTo(a.price ?? 0));
+        break;
+      case 'popular':
+        filtered.sort(
+            (a, b) => (b.totalAttendees ?? 0).compareTo(a.totalAttendees ?? 0));
+        break;
+    }
+
+    setState(() {
+      _filteredEvents = filtered;
+    });
+  }
+
+  void _onCategorySelected(int? categoryId) {
+    setState(() {
+      _selectedCategoryId = categoryId;
+    });
+    _filterEvents();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_searchQuery.isEmpty ? 'Browse Events' : 'Search Results'),
+        title: Text(_searchController.text.isEmpty
+            ? 'Browse Events'
+            : 'Search Results'),
         elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
@@ -118,9 +211,9 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
                         onPressed: () {
                           _searchController.clear();
                           setState(() {
-                            _searchQuery = '';
+                            _searchController.text = '';
                           });
-                          _performSearch();
+                          _filterEvents();
                         },
                       )
                     : null,
@@ -141,14 +234,9 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
               ),
               onChanged: (value) {
                 setState(() {
-                  _searchQuery = value;
+                  _searchController.text = value;
                 });
-              },
-              onSubmitted: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-                _performSearch();
+                _filterEvents();
               },
             ),
           ),
@@ -160,9 +248,12 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _searchResults.isEmpty
-                    ? _buildEmptyResults()
-                    : _buildSearchResults(),
+                : _error != null
+                    ? ErrorStateWidget(
+                        message: _error!, onRetry: _loadAllEvents)
+                    : _filteredEvents.isEmpty
+                        ? _buildEmptyResults()
+                        : _buildSearchResults(),
           ),
         ],
       ),
@@ -243,12 +334,7 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
       hint: const Text('All Categories'),
       underline: const SizedBox(),
       icon: const Icon(Icons.arrow_drop_down),
-      onChanged: (int? value) {
-        setState(() {
-          _selectedCategoryId = value;
-        });
-        _performSearch();
-      },
+      onChanged: _onCategorySelected,
       items: [
         const DropdownMenuItem<int?>(
           value: null,
@@ -274,7 +360,7 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
           setState(() {
             _selectedDateRange = value;
           });
-          _performSearch();
+          _filterEvents();
         }
       },
       items: const [
@@ -299,7 +385,7 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
           setState(() {
             _selectedPriceRange = value;
           });
-          _performSearch();
+          _filterEvents();
         }
       },
       items: const [
@@ -320,7 +406,7 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
           setState(() {
             _sortBy = value;
           });
-          _performSearch();
+          _filterEvents();
         }
       },
       items: const [
@@ -507,7 +593,7 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
                     child: FilledButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        _performSearch();
+                        _filterEvents();
                       },
                       child: const Text('Apply Filters'),
                     ),
@@ -585,9 +671,9 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
   Widget _buildSearchResults() {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: _searchResults.length,
+      itemCount: _filteredEvents.length,
       itemBuilder: (context, index) {
-        final event = _searchResults[index];
+        final event = _filteredEvents[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: EventCard(

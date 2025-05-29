@@ -8,47 +8,45 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/config/app_router.dart';
 import '../../../data/models/event_model.dart';
-import '../../../data/repositories/mock_event_repository.dart';
-import '../../../data/repositories/mock_user_repository.dart';
-import '../../../data/repositories/mock_registration_repository.dart';
+import '../../../data/services/event_service.dart';
+import '../../../data/services/bookmark_service.dart';
+import '../../../data/services/user_service.dart';
 import '../../widgets/common_widgets.dart';
 
 class EventDetailScreen extends StatefulWidget {
   final int eventId;
   final String? eventSlug;
 
-  const EventDetailScreen({super.key, this.eventId = 0, this.eventSlug})
-      : assert(
-          eventId != 0 || eventSlug != null,
-          'Either eventId or eventSlug must be provided',
-        );
+  const EventDetailScreen({
+    Key? key,
+    this.eventId = 0,
+    this.eventSlug,
+  }) : super(key: key);
 
   @override
   State<EventDetailScreen> createState() => _EventDetailScreenState();
 }
 
 class _EventDetailScreenState extends State<EventDetailScreen> {
-  final MockEventRepository _eventRepository = MockEventRepository();
-  final MockUserRepository _userRepository = MockUserRepository();
-  final MockRegistrationRepository _registrationRepository =
-      MockRegistrationRepository();
+  final EventService _eventService = EventService();
+  final BookmarkService _bookmarkService = BookmarkService();
+  final UserService _userService = UserService();
 
   EventModel? _event;
   bool _isLoading = true;
-  bool _isBookmarking = false;
-  bool _isRegistering = false;
+  bool _isBookmarked = false;
+  bool _isRegistered = false;
   String? _error;
   bool _isLoggedIn = false;
-  bool _isRegistered = false;
   final int _currentImageIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadEventData();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadEventData() async {
     setState(() {
       _isLoading = true;
       _error = null;
@@ -56,31 +54,28 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
     try {
       // Check if user is logged in
-      final currentUser = await _userRepository.getCurrentUser();
-      _isLoggedIn = currentUser != null;
+      _isLoggedIn = await _userService.isLoggedIn();
 
       // Fetch event data
       EventModel? event;
       if (widget.eventId != 0) {
-        event = await _eventRepository.getEventById(widget.eventId);
+        event = await _eventService.getEventDetail(widget.eventId);
       } else if (widget.eventSlug != null) {
-        event = await _eventRepository.getEventBySlug(widget.eventSlug!);
+        event = await _eventService.getEventBySlug(widget.eventSlug!);
       }
 
       if (event == null) {
-        setState(() {
-          _error = 'Event not found';
-          _isLoading = false;
-        });
-        return;
+        throw Exception('Event not found');
       }
 
       // Check if user is registered for this event
-      if (_isLoggedIn && currentUser != null) {
-        _isRegistered = await _registrationRepository.isUserRegistered(
-          event.id,
-          currentUser.id,
-        );
+      if (_isLoggedIn) {
+        _isRegistered = await _userService.isUserRegistered(event.id);
+      }
+
+      // Check if event is bookmarked
+      if (_isLoggedIn) {
+        _isBookmarked = await _bookmarkService.isEventBookmarked(event.id);
       }
 
       if (mounted) {
@@ -92,7 +87,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Failed to load event details. Please try again.';
+          _error = e.toString();
           _isLoading = false;
         });
       }
@@ -100,40 +95,41 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   Future<void> _toggleBookmark() async {
-    if (_event == null || _isBookmarking) return;
-
-    setState(() {
-      _isBookmarking = true;
-    });
+    if (!_isLoggedIn) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please login to bookmark events'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
 
     try {
-      final updatedEvent = await _eventRepository.toggleBookmark(_event!.id);
+      final isBookmarked = await _bookmarkService.toggleBookmark(_event!.id);
       if (mounted) {
         setState(() {
-          _event = updatedEvent;
-          _isBookmarking = false;
+          _isBookmarked = isBookmarked;
         });
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _event!.isBookmarked
+              isBookmarked
                   ? 'Event bookmarked'
                   : 'Event removed from bookmarks',
             ),
-            duration: const Duration(seconds: 2),
+            backgroundColor: Colors.green,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isBookmarking = false;
-        });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Failed to update bookmark'),
-            duration: Duration(seconds: 2),
+            backgroundColor: Colors.red,
           ),
         );
       }
@@ -141,92 +137,43 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   Future<void> _registerForEvent() async {
-    if (_event == null || _isRegistering) return;
-
-    // If user is not logged in, prompt them to login
     if (!_isLoggedIn) {
-      final result = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Login Required'),
-          content: const Text(
-            'You need to be logged in to register for this event',
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please login to register for events'),
+            backgroundColor: Colors.red,
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Login'),
-            ),
-          ],
-        ),
-      );
-
-      if (result == true) {
-        if (mounted) {
-          Navigator.pushNamed(context, AppRouter.login);
-        }
+        );
       }
       return;
     }
 
-    setState(() {
-      _isRegistering = true;
-    });
-
     try {
-      final currentUser = await _userRepository.getCurrentUser();
+      final currentUser = await _userService.getCurrentUser();
       if (currentUser == null) throw Exception('User not found');
 
       // Create registration
-      final registration = await _registrationRepository.registerForEvent(
-        _event!.id,
-        currentUser.id,
-        amount: _event!.isFree ? null : _event!.price,
-      );
+      await _userService.registerForEvent(_event!.id, currentUser.id);
 
       if (mounted) {
         setState(() {
-          _isRegistering = false;
           _isRegistered = true;
         });
-
-        // If it's a paid event, navigate to payment screen
-        if (!_event!.isFree) {
-          Navigator.pushNamed(
-            context,
-            AppRouter.payment,
-            arguments: {'event': _event, 'registration': registration},
-          );
-        } else {
-          // For free events, show confirmation directly
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Registration Successful'),
-              content: const Text(
-                'You have successfully registered for this event.',
-              ),
-              actions: [
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Successfully registered for event'),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isRegistering = false;
-        });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to register for event')),
+          SnackBar(
+            content: Text('Failed to register: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -259,7 +206,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? ErrorStateWidget(message: _error!, onRetry: _loadData)
+              ? ErrorStateWidget(message: _error!, onRetry: _loadEventData)
               : _buildEventDetail(),
       bottomNavigationBar: _event != null ? _buildBottomBar() : null,
     );
@@ -346,7 +293,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           actions: [
             IconButton(
               icon: Icon(
-                _event!.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
                 color: Colors.white,
               ),
               onPressed: _toggleBookmark,
@@ -727,7 +674,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             // Bookmark button
             IconButton(
               icon: Icon(
-                _event!.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
               ),
               onPressed: _toggleBookmark,
             ),
@@ -745,7 +692,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     : (() {
                         _registerForEvent();
                       }),
-                isLoading: _isRegistering,
               ),
             ),
           ],

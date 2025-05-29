@@ -2,10 +2,91 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/user_model.dart';
 import 'auth_token_service.dart';
+import '../../core/config/app_constants.dart';
 
 class UserService {
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
   final _tokenService = AuthTokenService();
+
+  Future<UserModel?> getCurrentUser() async {
+    try {
+      final token = await _tokenService.getToken();
+      if (token == null) return null;
+
+      final response = await http.get(
+        Uri.parse('${AppConstants.baseUrl}/auth/me'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body)['data'];
+        return UserModel.fromJson(data);
+      } else {
+        throw Exception('Failed to get current user: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  Future<bool> isLoggedIn() async {
+    final token = await _tokenService.getToken();
+    return token != null;
+  }
+
+  Future<bool> isUserRegistered(int eventId) async {
+    try {
+      final token = await _tokenService.getToken();
+      if (token == null) return false;
+
+      final response = await http.get(
+        Uri.parse(
+            '${AppConstants.baseUrl}/events/$eventId/registration/status'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body)['data'];
+        return data['is_registered'] ?? false;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<Map<String, dynamic>> registerForEvent(int eventId, int userId) async {
+    try {
+      final token = await _tokenService.getToken();
+      if (token == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final response = await http.post(
+        Uri.parse('${AppConstants.baseUrl}/events/$eventId/register'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'user_id': userId,
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body)['data'];
+        return data;
+      } else {
+        throw Exception('Failed to register for event: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
 
   Future<Map<String, dynamic>> register({
     required String name,
@@ -17,7 +98,7 @@ class UserService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/register'),
+        Uri.parse('${AppConstants.baseUrl}/auth/register'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -60,7 +141,7 @@ class UserService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/login'),
+        Uri.parse('${AppConstants.baseUrl}/auth/login'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',

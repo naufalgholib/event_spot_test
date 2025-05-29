@@ -32,10 +32,9 @@ class RegistrationModel {
       userId: json['user_id'],
       status: json['status'],
       ticketNumber: json['ticket_number'],
-      amount:
-          json['amount'] != null
-              ? double.parse(json['amount'].toString())
-              : null,
+      amount: json['amount'] != null
+          ? double.parse(json['amount'].toString())
+          : null,
       paymentStatus: json['payment_status'],
       paymentMethod: json['payment_method'],
       paymentId: json['payment_id'],

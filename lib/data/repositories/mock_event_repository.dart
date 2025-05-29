@@ -87,42 +87,42 @@ class MockEventRepository {
       createdAt: DateTime.now().subtract(const Duration(days: 60)),
       updatedAt: DateTime.now().subtract(const Duration(days: 15)),
       totalAttendees: 250,
-      images: [
-        EventImage(
-          id: 1,
-          eventId: 1,
-          imagePath:
-              'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
-          isPrimary: true,
-          createdAt: DateTime.now().subtract(const Duration(days: 60)),
-          updatedAt: DateTime.now().subtract(const Duration(days: 60)),
-        ),
-        EventImage(
-          id: 2,
-          eventId: 1,
-          imagePath:
-              'https://images.unsplash.com/photo-1506157786151-b8491531f063?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
-          isPrimary: false,
-          createdAt: DateTime.now().subtract(const Duration(days: 60)),
-          updatedAt: DateTime.now().subtract(const Duration(days: 60)),
-        ),
-      ],
-      tags: [
-        EventTag(
-          id: 1,
-          name: 'Festival',
-          slug: 'festival',
-          createdAt: DateTime.now().subtract(const Duration(days: 90)),
-          updatedAt: DateTime.now().subtract(const Duration(days: 90)),
-        ),
-        EventTag(
-          id: 2,
-          name: 'Concert',
-          slug: 'concert',
-          createdAt: DateTime.now().subtract(const Duration(days: 90)),
-          updatedAt: DateTime.now().subtract(const Duration(days: 90)),
-        ),
-      ],
+      // images: [
+      //   EventImage(
+      //     id: 1,
+      //     eventId: 1,
+      //     imagePath:
+      //         'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+      //     isPrimary: true,
+      //     createdAt: DateTime.now().subtract(const Duration(days: 60)),
+      //     updatedAt: DateTime.now().subtract(const Duration(days: 60)),
+      //   ),
+      //   EventImage(
+      //     id: 2,
+      //     eventId: 1,
+      //     imagePath:
+      //         'https://images.unsplash.com/photo-1506157786151-b8491531f063?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+      //     isPrimary: false,
+      //     createdAt: DateTime.now().subtract(const Duration(days: 60)),
+      //     updatedAt: DateTime.now().subtract(const Duration(days: 60)),
+      //   ),
+      // ],
+      // tags: [
+      //   EventTag(
+      //     id: 1,
+      //     name: 'Festival',
+      //     slug: 'festival',
+      //     createdAt: DateTime.now().subtract(const Duration(days: 90)),
+      //     updatedAt: DateTime.now().subtract(const Duration(days: 90)),
+      //   ),
+      //   EventTag(
+      //     id: 2,
+      //     name: 'Concert',
+      //     slug: 'concert',
+      //     createdAt: DateTime.now().subtract(const Duration(days: 90)),
+      //     updatedAt: DateTime.now().subtract(const Duration(days: 90)),
+      //   ),
+      // ],
     ),
     EventModel(
       id: 2,
@@ -154,33 +154,33 @@ class MockEventRepository {
       createdAt: DateTime.now().subtract(const Duration(days: 90)),
       updatedAt: DateTime.now().subtract(const Duration(days: 30)),
       totalAttendees: 420,
-      images: [
-        EventImage(
-          id: 3,
-          eventId: 2,
-          imagePath:
-              'https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
-          isPrimary: true,
-          createdAt: DateTime.now().subtract(const Duration(days: 90)),
-          updatedAt: DateTime.now().subtract(const Duration(days: 90)),
-        ),
-      ],
-      tags: [
-        EventTag(
-          id: 3,
-          name: 'Technology',
-          slug: 'technology',
-          createdAt: DateTime.now().subtract(const Duration(days: 90)),
-          updatedAt: DateTime.now().subtract(const Duration(days: 90)),
-        ),
-        EventTag(
-          id: 4,
-          name: 'Conference',
-          slug: 'conference',
-          createdAt: DateTime.now().subtract(const Duration(days: 90)),
-          updatedAt: DateTime.now().subtract(const Duration(days: 90)),
-        ),
-      ],
+      // images: [
+      //   EventImage(
+      //     id: 3,
+      //     eventId: 2,
+      //     imagePath:
+      //         'https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+      //     isPrimary: true,
+      //     createdAt: DateTime.now().subtract(const Duration(days: 90)),
+      //     updatedAt: DateTime.now().subtract(const Duration(days: 90)),
+      //   ),
+      // ],
+      // tags: [
+      //   EventTag(
+      //     id: 3,
+      //     name: 'Technology',
+      //     slug: 'technology',
+      //     createdAt: DateTime.now().subtract(const Duration(days: 90)),
+      //     updatedAt: DateTime.now().subtract(const Duration(days: 90)),
+      //   ),
+      //   EventTag(
+      //     id: 4,
+      //     name: 'Conference',
+      //     slug: 'conference',
+      //     createdAt: DateTime.now().subtract(const Duration(days: 90)),
+      //     updatedAt: DateTime.now().subtract(const Duration(days: 90)),
+      //   ),
+      // ],
     ),
     EventModel(
       id: 3,

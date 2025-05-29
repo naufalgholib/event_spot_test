@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/event_tag_model.dart';
 import 'auth_token_service.dart';
+import '../../core/config/app_constants.dart';
 
 class EventTagService {
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
   final _tokenService = AuthTokenService();
 
   // Helper method to get auth headers
@@ -21,7 +21,7 @@ class EventTagService {
     try {
       final headers = await _getAuthHeaders();
       final response = await http.get(
-        Uri.parse('$baseUrl/admin/event-tags'),
+        Uri.parse('${AppConstants.baseUrl}/admin/event-tags'),
         headers: headers,
       );
 
@@ -43,7 +43,7 @@ class EventTagService {
     try {
       final headers = await _getAuthHeaders();
       final response = await http.get(
-        Uri.parse('$baseUrl/admin/event-tags/$id'),
+        Uri.parse('${AppConstants.baseUrl}/admin/event-tags/$id'),
         headers: headers,
       );
 
@@ -64,7 +64,7 @@ class EventTagService {
     try {
       final headers = await _getAuthHeaders();
       final response = await http.post(
-        Uri.parse('$baseUrl/admin/event-tags'),
+        Uri.parse('${AppConstants.baseUrl}/admin/event-tags'),
         headers: headers,
         body: jsonEncode({
           'name': tag.name,
@@ -97,7 +97,7 @@ class EventTagService {
     try {
       final headers = await _getAuthHeaders();
       final response = await http.put(
-        Uri.parse('$baseUrl/admin/event-tags/$id'),
+        Uri.parse('${AppConstants.baseUrl}/admin/event-tags/$id'),
         headers: headers,
         body: jsonEncode({
           'name': tag.name,
@@ -130,7 +130,7 @@ class EventTagService {
     try {
       final headers = await _getAuthHeaders();
       final response = await http.delete(
-        Uri.parse('$baseUrl/admin/event-tags/$id'),
+        Uri.parse('${AppConstants.baseUrl}/admin/event-tags/$id'),
         headers: headers,
       );
 

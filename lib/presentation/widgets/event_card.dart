@@ -91,10 +91,9 @@ class EventCard extends StatelessWidget {
                           event.isBookmarked
                               ? Icons.bookmark
                               : Icons.bookmark_border,
-                          color:
-                              event.isBookmarked
-                                  ? colorScheme.primary
-                                  : colorScheme.onSurface,
+                          color: event.isBookmarked
+                              ? colorScheme.primary
+                              : colorScheme.onSurface,
                         ),
                         onPressed: () {
                           // This would be handled by a state management solution
