@@ -53,8 +53,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     });
 
     try {
-      // Check if user is logged in
+      // Check if user is logged in and is a regular user
       _isLoggedIn = await _userService.isLoggedIn();
+      if (_isLoggedIn) {
+        final currentUser = await _userService.getCurrentUser();
+        _isLoggedIn = currentUser?.userType == 'user';
+      }
 
       // Fetch event data
       EventModel? event;
@@ -99,7 +103,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Please login to bookmark events'),
+            content: Text('Please login as a regular user to bookmark events'),
             backgroundColor: Colors.red,
           ),
         );
@@ -127,8 +131,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to update bookmark'),
+          SnackBar(
+            content: Text('Failed to update bookmark: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );

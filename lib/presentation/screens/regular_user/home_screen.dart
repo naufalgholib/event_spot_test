@@ -504,43 +504,138 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSavedTab() {
-    // Load and display bookmarked events
+    final authProvider = Provider.of<AuthProvider>(context);
+    final currentUser = authProvider.currentUser;
+
+    if (currentUser == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.bookmark_border, size: 64),
+            const SizedBox(height: 16),
+            const Text(
+              'Please login to view your bookmarked events',
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, AppRouter.login);
+              },
+              child: const Text('Login'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (currentUser.userType != 'user') {
+      return const Center(
+        child: Text(
+          'This feature is only available for regular users',
+          style: TextStyle(fontSize: 16),
+        ),
+      );
+    }
+
     return FutureBuilder<List<EventModel>>(
       future: _eventService.getBookmarkedEvents(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
+        }
+
+        if (snapshot.hasError) {
           return ErrorStateWidget(
-            message: 'Failed to load bookmarked events',
+            message: 'Failed to load bookmarked events: ${snapshot.error}',
             onRetry: () => setState(() {}),
           );
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+        }
+
+        final bookmarkedEvents = snapshot.data ?? [];
+
+        if (bookmarkedEvents.isEmpty) {
           return const EmptyStateWidget(
-            message: 'No bookmarked events',
+            message: 'No bookmarked events yet',
             icon: Icons.bookmark_border,
           );
         }
 
-        final bookmarkedEvents = snapshot.data!;
-        return ListView.builder(
-          padding: const EdgeInsets.all(AppConstants.defaultPadding),
-          itemCount: bookmarkedEvents.length,
-          itemBuilder: (context, index) {
-            final event = bookmarkedEvents[index];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: SimpleEventCard(
-                title: event.title,
-                imageUrl: event.posterImage,
-                location: event.locationName,
-                date: DateFormat('E, MMM d, y').format(event.startDate),
-                category: event.categoryName,
-                isFree: event.isFree,
-                onTap: () => _onEventTapped(event),
+        return Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
               ),
-            );
-          },
+              child: SafeArea(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.bookmark,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'My Bookmarks',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'You have ${bookmarkedEvents.length} bookmarked events',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(AppConstants.defaultPadding),
+                itemCount: bookmarkedEvents.length,
+                itemBuilder: (context, index) {
+                  final event = bookmarkedEvents[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: SimpleEventCard(
+                      title: event.title,
+                      imageUrl: event.posterImage,
+                      location: event.locationName,
+                      date: DateFormat('E, MMM d, y').format(event.startDate),
+                      category: event.categoryName,
+                      isFree: event.isFree,
+                      onTap: () => _onEventTapped(event),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         );
       },
     );

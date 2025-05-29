@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/config/app_constants.dart';
 import '../../../core/config/app_router.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../data/models/category_model.dart';
 import '../../../data/models/event_model.dart';
-import '../../../data/repositories/mock_event_repository.dart';
 import '../../../data/services/event_service.dart';
 import '../../../data/services/category_service.dart';
 import '../../widgets/event_card.dart';

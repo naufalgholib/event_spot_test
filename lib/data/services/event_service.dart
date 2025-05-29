@@ -48,18 +48,25 @@ class EventService {
       }
 
       final response = await http.get(
-        Uri.parse('${AppConstants.baseUrl}/user/bookmarked-events'),
+        Uri.parse('${AppConstants.baseUrl}/user/bookmarks'),
         headers: {
           'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
         },
       );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
-        final List<dynamic> data = responseData['data'];
-        return data.map((json) => EventModel.fromJson(json)).toList();
+        if (responseData['status'] == 'success') {
+          final List<dynamic> data = responseData['data'];
+          return data.map((json) => EventModel.fromJson(json)).toList();
+        } else {
+          throw Exception(
+              responseData['message'] ?? 'Failed to load bookmarked events');
+        }
       } else {
-        throw Exception(
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['message'] ??
             'Failed to load bookmarked events: ${response.statusCode}');
       }
     } catch (e) {
