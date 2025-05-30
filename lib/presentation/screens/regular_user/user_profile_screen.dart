@@ -7,8 +7,10 @@ import '../../../core/config/app_router.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/event_model.dart';
-import '../../../data/repositories/mock_event_repository.dart';
+import '../../../data/services/event_service.dart';
+import '../../../data/services/user_service.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/event_card.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -19,7 +21,8 @@ class UserProfileScreen extends StatefulWidget {
 
 class _UserProfileScreenState extends State<UserProfileScreen>
     with SingleTickerProviderStateMixin {
-  final MockEventRepository _eventRepository = MockEventRepository();
+  final EventService _eventService = EventService();
+  final UserService _userService = UserService();
 
   late TabController _tabController;
   List<EventModel>? _upcomingEvents;
@@ -55,20 +58,59 @@ class _UserProfileScreenState extends State<UserProfileScreen>
         throw Exception('User not found. Please log in.');
       }
 
-      final registeredEvents = await _eventRepository.getRegisteredEvents();
-      final now = DateTime.now();
-      final upcoming =
-          registeredEvents.where((e) => e.startDate.isAfter(now)).toList();
-      final past =
-          registeredEvents.where((e) => e.startDate.isBefore(now)).toList();
+      // Load upcoming events
+      try {
+        final upcoming = await _eventService.getUpcomingEvents();
+        setState(() {
+          _upcomingEvents = upcoming;
+        });
+      } catch (e) {
+        // If error is about no events, just set empty list
+        if (e.toString().contains('Failed to load upcoming events')) {
+          setState(() {
+            _upcomingEvents = [];
+          });
+        } else {
+          rethrow;
+        }
+      }
 
-      final bookmarked = await _eventRepository.getBookmarkedEvents();
+      // Load event history
+      try {
+        final past = await _eventService.getEventHistory();
+        setState(() {
+          _pastEvents = past;
+        });
+      } catch (e) {
+        // If error is about no events, just set empty list
+        if (e.toString().contains('Failed to load event history')) {
+          setState(() {
+            _pastEvents = [];
+          });
+        } else {
+          rethrow;
+        }
+      }
+
+      // Load bookmarked events
+      try {
+        final bookmarked = await _eventService.getBookmarkedEvents();
+        setState(() {
+          _bookmarkedEvents = bookmarked;
+        });
+      } catch (e) {
+        // If error is about no events, just set empty list
+        if (e.toString().contains('Failed to load bookmarked events')) {
+          setState(() {
+            _bookmarkedEvents = [];
+          });
+        } else {
+          rethrow;
+        }
+      }
 
       if (mounted) {
         setState(() {
-          _upcomingEvents = upcoming;
-          _pastEvents = past;
-          _bookmarkedEvents = bookmarked;
           _isLoading = false;
         });
       }
@@ -272,7 +314,34 @@ class _UserProfileScreenState extends State<UserProfileScreen>
 
   Widget _buildEventList(List<EventModel>? events, String emptyMessage) {
     if (events == null || events.isEmpty) {
-      return EmptyStateWidget(message: emptyMessage, icon: Icons.event_busy);
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.event_busy,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              emptyMessage,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pushNamed(context, AppRouter.home);
+              },
+              label: const Text('Browse Events'),
+            ),
+          ],
+        ),
+      );
     }
 
     return ListView.builder(
@@ -282,14 +351,19 @@ class _UserProfileScreenState extends State<UserProfileScreen>
         final event = events[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
-          child: SimpleEventCard(
-            title: event.title,
-            imageUrl: event.posterImage,
-            location: event.locationName,
-            date: DateFormat('E, MMM d, y').format(event.startDate),
-            category: event.categoryName,
-            isFree: event.isFree,
+          child: EventCard(
+            event: event,
             onTap: () => _onEventTapped(event),
+            onBookmarkChanged: (isBookmarked) {
+              setState(() {
+                final updatedEvent = event.copyWith(isBookmarked: isBookmarked);
+                final eventIndex = events.indexWhere((e) => e.id == event.id);
+                if (eventIndex != -1) {
+                  events[eventIndex] = updatedEvent;
+                }
+              });
+            },
+            showStatus: false,
           ),
         );
       },

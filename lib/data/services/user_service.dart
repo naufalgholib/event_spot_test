@@ -35,59 +35,6 @@ class UserService {
     return token != null;
   }
 
-  Future<bool> isUserRegistered(int eventId) async {
-    try {
-      final token = await _tokenService.getToken();
-      if (token == null) return false;
-
-      final response = await http.get(
-        Uri.parse(
-            '${AppConstants.baseUrl}/events/$eventId/registration/status'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body)['data'];
-        return data['is_registered'] ?? false;
-      } else {
-        return false;
-      }
-    } catch (e) {
-      return false;
-    }
-  }
-
-  Future<Map<String, dynamic>> registerForEvent(int eventId, int userId) async {
-    try {
-      final token = await _tokenService.getToken();
-      if (token == null) {
-        throw Exception('User not authenticated');
-      }
-
-      final response = await http.post(
-        Uri.parse('${AppConstants.baseUrl}/events/$eventId/register'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'user_id': userId,
-        }),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = jsonDecode(response.body)['data'];
-        return data;
-      } else {
-        throw Exception('Failed to register for event: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error: $e');
-    }
-  }
-
   Future<Map<String, dynamic>> register({
     required String name,
     required String email,

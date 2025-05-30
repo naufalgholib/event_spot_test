@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/config/app_router.dart';
@@ -11,6 +13,7 @@ import '../../../data/models/event_model.dart';
 import '../../../data/services/event_service.dart';
 import '../../../data/services/bookmark_service.dart';
 import '../../../data/services/user_service.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../widgets/common_widgets.dart';
 
 class EventDetailScreen extends StatefulWidget {
@@ -39,6 +42,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   String? _error;
   bool _isLoggedIn = false;
   final int _currentImageIndex = 0;
+  Map<String, dynamic>? _attendanceDetails;
+  bool _isRegistering = false;
 
   @override
   void initState() {
@@ -53,33 +58,24 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     });
 
     try {
-      // Check if user is logged in and is a regular user
-      _isLoggedIn = await _userService.isLoggedIn();
-      if (_isLoggedIn) {
-        final currentUser = await _userService.getCurrentUser();
-        _isLoggedIn = currentUser?.userType == 'user';
-      }
+      final event = await _eventService.getEventDetail(widget.eventId);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      _isLoggedIn = authProvider.isLoggedIn;
 
-      // Fetch event data
-      EventModel? event;
-      if (widget.eventId != 0) {
-        event = await _eventService.getEventDetail(widget.eventId);
-      } else if (widget.eventSlug != null) {
-        event = await _eventService.getEventBySlug(widget.eventSlug!);
-      }
-
-      if (event == null) {
-        throw Exception('Event not found');
-      }
-
-      // Check if user is registered for this event
-      if (_isLoggedIn) {
-        _isRegistered = await _userService.isUserRegistered(event.id);
-      }
-
-      // Check if event is bookmarked
       if (_isLoggedIn) {
         _isBookmarked = await _bookmarkService.isEventBookmarked(event.id);
+
+        // Load attendance details if user is logged in
+        try {
+          final attendance = await _eventService.getAttendanceDetails(event.id);
+          setState(() {
+            _attendanceDetails = attendance;
+            _isRegistered = attendance['status'] == 'registered';
+          });
+        } catch (e) {
+          // Ignore attendance error, just show event details
+          print('Error loading attendance: $e');
+        }
       }
 
       if (mounted) {
@@ -141,29 +137,25 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   Future<void> _registerForEvent() async {
-    if (!_isLoggedIn) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please login to register for events'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-      return;
-    }
+    if (_event == null) return;
+
+    setState(() {
+      _isRegistering = true;
+    });
 
     try {
-      final currentUser = await _userService.getCurrentUser();
-      if (currentUser == null) throw Exception('User not found');
+      final registrationData = await _eventService.registerForEvent(_event!.id);
 
-      // Create registration
-      await _userService.registerForEvent(_event!.id, currentUser.id);
+      // Reload attendance details
+      final attendance = await _eventService.getAttendanceDetails(_event!.id);
 
       if (mounted) {
         setState(() {
+          _attendanceDetails = attendance;
           _isRegistered = true;
+          _isRegistering = false;
         });
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Successfully registered for event'),
@@ -173,14 +165,91 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
+        setState(() {
+          _isRegistering = false;
+        });
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to register: ${e.toString()}'),
+            content: Text(e.toString()),
             backgroundColor: Colors.red,
           ),
         );
       }
     }
+  }
+
+  Future<void> _cancelRegistration() async {
+    if (_event == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancel Registration'),
+        content: const Text(
+            'Are you sure you want to cancel your registration? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Yes, Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _isRegistering = true;
+    });
+
+    try {
+      final success = await _eventService.cancelEventRegistration(_event!.id);
+
+      if (success) {
+        // Reload attendance details
+        final attendance = await _eventService.getAttendanceDetails(_event!.id);
+
+        if (mounted) {
+          setState(() {
+            _attendanceDetails = attendance;
+            _isRegistered = false;
+            _isRegistering = false;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Registration cancelled successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isRegistering = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _shareEvent() {
+    if (_event == null) return;
+    Share.share(
+        'Check out this event: ${_event!.title}\n${_event!.description}\nDate: ${DateFormat('EEEE, MMMM d, y').format(_event!.startDate)}');
   }
 
   Future<void> _launchMap() async {
@@ -211,7 +280,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? ErrorStateWidget(message: _error!, onRetry: _loadEventData)
-              : _buildEventDetail(),
+              : _event == null
+                  ? const EmptyStateWidget(
+                      message: 'Event not found',
+                      icon: Icons.event_busy,
+                    )
+                  : _buildEventDetail(),
       bottomNavigationBar: _event != null ? _buildBottomBar() : null,
     );
   }
@@ -304,9 +378,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             ),
             IconButton(
               icon: const Icon(Icons.share, color: Colors.white),
-              onPressed: () {
-                // TODO: Implement share functionality
-              },
+              onPressed: _shareEvent,
             ),
           ],
         ),
@@ -687,15 +759,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             Expanded(
               child: AppButton(
                 text: _isRegistered
-                    ? 'Registered'
+                    ? 'Cancel'
                     : _event!.isFree
                         ? 'Register Now'
                         : 'Pay ${NumberFormat.currency(symbol: '\$').format(_event!.price)}',
-                onPressed: _isRegistered
-                    ? (() {})
-                    : (() {
-                        _registerForEvent();
-                      }),
+                onPressed:
+                    _isRegistered ? _cancelRegistration : _registerForEvent,
               ),
             ),
           ],

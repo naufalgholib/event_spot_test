@@ -117,6 +117,10 @@ class EventService {
 
       if (response.statusCode == 200) {
         final dynamic data = json.decode(response.body)['data'];
+        // Get attendance status
+        final attendanceDetails = await getAttendanceDetails(id);
+        // Add registration status to event data
+        data['registration_status'] = attendanceDetails['status'];
         return EventModel.fromJson(data);
       } else {
         throw Exception('Failed to load event detail');
@@ -133,6 +137,12 @@ class EventService {
 
       if (response.statusCode == 200) {
         final dynamic data = json.decode(response.body)['data'];
+        // Get event ID from data
+        final eventId = data['id'];
+        // Get attendance status
+        final attendanceDetails = await getAttendanceDetails(eventId);
+        // Add registration status to event data
+        data['registration_status'] = attendanceDetails['status'];
         return EventModel.fromJson(data);
       } else {
         throw Exception('Failed to load event detail');
@@ -185,6 +195,182 @@ class EventService {
       } else {
         throw Exception(
             'Failed to load promoter events: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  Future<List<EventModel>> getUpcomingEvents() async {
+    try {
+      final token = await _tokenService.getToken();
+      if (token == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final response = await http.get(
+        Uri.parse('${AppConstants.baseUrl}/user/events/upcoming'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        if (responseData.containsKey('data')) {
+          final List<dynamic> data = responseData['data'];
+          return data.map((json) {
+            json['registration_status'] = 'registered';
+            return EventModel.fromJson(json);
+          }).toList();
+        }
+        return [];
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['message'] ??
+            'Failed to load upcoming events: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error in getUpcomingEvents: $e');
+      throw Exception('Failed to load upcoming events');
+    }
+  }
+
+  Future<List<EventModel>> getEventHistory() async {
+    try {
+      final token = await _tokenService.getToken();
+      if (token == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final response = await http.get(
+        Uri.parse('${AppConstants.baseUrl}/user/events/history'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        if (responseData.containsKey('data')) {
+          final List<dynamic> data = responseData['data'];
+          return data.map((json) {
+            // Get status from attendance data if available
+            final attendanceData = json['attendance'] as Map<String, dynamic>?;
+            if (attendanceData != null) {
+              json['registration_status'] = attendanceData['status'];
+            }
+            return EventModel.fromJson(json);
+          }).toList();
+        }
+        return [];
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['message'] ??
+            'Failed to load event history: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error in getEventHistory: $e');
+      throw Exception('Failed to load event history');
+    }
+  }
+
+  Future<Map<String, dynamic>> getAttendanceDetails(int eventId) async {
+    try {
+      final token = await _tokenService.getToken();
+      if (token == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final response = await http.get(
+        Uri.parse('${AppConstants.baseUrl}/user/events/$eventId/attendance'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        if (responseData.containsKey('data')) {
+          return responseData['data'];
+        }
+        return {'status': 'not_registered'};
+      } else if (response.statusCode == 404) {
+        return {'status': 'not_registered'};
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['message'] ??
+            'Failed to load attendance details: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error in getAttendanceDetails: $e');
+      return {'status': 'not_registered'};
+    }
+  }
+
+  Future<Map<String, dynamic>> registerForEvent(int eventId) async {
+    try {
+      final token = await _tokenService.getToken();
+      if (token == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final response = await http.post(
+        Uri.parse('${AppConstants.baseUrl}/user/events/$eventId/register'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        if (responseData['status'] == 'success') {
+          return responseData['data'];
+        } else {
+          throw Exception(
+              responseData['message'] ?? 'Failed to register for event');
+        }
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['message'] ??
+            'Failed to register for event: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  Future<bool> cancelEventRegistration(int eventId) async {
+    try {
+      final token = await _tokenService.getToken();
+      if (token == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final response = await http.delete(
+        Uri.parse('${AppConstants.baseUrl}/user/events/$eventId/register'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        if (responseData['status'] == 'success') {
+          return true;
+        } else {
+          throw Exception(
+              responseData['message'] ?? 'Failed to cancel registration');
+        }
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['message'] ??
+            'Failed to cancel registration: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Error: $e');

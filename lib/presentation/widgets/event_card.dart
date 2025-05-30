@@ -9,6 +9,8 @@ class EventCard extends StatelessWidget {
   final VoidCallback? onTap;
   final bool showBookmarkButton;
   final Function(bool)? onBookmarkChanged;
+  final String? status;
+  final bool showStatus;
 
   const EventCard({
     Key? key,
@@ -16,6 +18,8 @@ class EventCard extends StatelessWidget {
     this.onTap,
     this.showBookmarkButton = true,
     this.onBookmarkChanged,
+    this.status,
+    this.showStatus = true,
   }) : super(key: key);
 
   Future<void> _toggleBookmark(BuildContext context) async {
@@ -98,6 +102,29 @@ class EventCard extends StatelessWidget {
                         'Featured',
                         style: TextStyle(
                           color: colorScheme.onPrimary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                if (showStatus && status != null)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(status!),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        _getStatusText(status!),
+                        style: const TextStyle(
+                          color: Colors.white,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -205,5 +232,39 @@ class EventCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'registered':
+        return Colors.green;
+      case 'attended':
+        return Colors.blue;
+      case 'cancelled':
+        return Colors.red;
+      case 'pending_payment':
+        return Colors.orange;
+      case 'not_registered':
+        return Colors.grey;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _getStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'registered':
+        return 'Registered';
+      case 'attended':
+        return 'Attended';
+      case 'cancelled':
+        return 'Cancelled';
+      case 'pending_payment':
+        return 'Pending Payment';
+      case 'not_registered':
+        return 'Not Registered';
+      default:
+        return status;
+    }
   }
 }
