@@ -36,9 +36,6 @@ class EventModel {
   final List<EventImage>? images;
   final List<EventTagModel>? tags;
 
-  // Add registration status
-  final String? registrationStatus;
-
   EventModel({
     required this.id,
     required this.title,
@@ -69,7 +66,6 @@ class EventModel {
     required this.updatedAt,
     this.totalAttendees,
     this.isBookmarked = false,
-    this.registrationStatus,
     this.images,
     this.tags,
   });
@@ -133,7 +129,6 @@ class EventModel {
           json['updated_at']?.toString() ?? now.toIso8601String()),
       totalAttendees: json['total_attendees'],
       isBookmarked: json['is_bookmarked'] == 1,
-      registrationStatus: json['registration_status'],
       images: json['images'] != null
           ? (json['images'] as List).map((i) => EventImage.fromJson(i)).toList()
           : null,
@@ -177,7 +172,6 @@ class EventModel {
       'updated_at': updatedAt.toIso8601String(),
       'total_attendees': totalAttendees,
       'is_bookmarked': isBookmarked ? 1 : 0,
-      'registration_status': registrationStatus,
     };
 
     if (images != null) {
@@ -221,7 +215,6 @@ class EventModel {
     DateTime? updatedAt,
     int? totalAttendees,
     bool? isBookmarked,
-    String? registrationStatus,
     List<EventImage>? images,
     List<EventTagModel>? tags,
   }) {
@@ -255,7 +248,6 @@ class EventModel {
       updatedAt: updatedAt ?? this.updatedAt,
       totalAttendees: totalAttendees ?? this.totalAttendees,
       isBookmarked: isBookmarked ?? this.isBookmarked,
-      registrationStatus: registrationStatus ?? this.registrationStatus,
       images: images ?? this.images,
       tags: tags ?? this.tags,
     );

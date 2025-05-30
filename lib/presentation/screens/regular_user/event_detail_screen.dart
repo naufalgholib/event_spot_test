@@ -15,6 +15,7 @@ import '../../../data/services/bookmark_service.dart';
 import '../../../data/services/user_service.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../widgets/common_widgets.dart';
+import '../../widgets/event_card.dart';
 
 class EventDetailScreen extends StatefulWidget {
   final int eventId;
@@ -66,16 +67,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         _isBookmarked = await _bookmarkService.isEventBookmarked(event.id);
 
         // Load attendance details if user is logged in
-        try {
-          final attendance = await _eventService.getAttendanceDetails(event.id);
-          setState(() {
-            _attendanceDetails = attendance;
-            _isRegistered = attendance['status'] == 'registered';
-          });
-        } catch (e) {
-          // Ignore attendance error, just show event details
-          print('Error loading attendance: $e');
-        }
+        final attendance = await _eventService.getAttendanceDetails(event.id);
+        setState(() {
+          _attendanceDetails = attendance;
+          _isRegistered = attendance['status'] == 'registered';
+        });
       }
 
       if (mounted) {
@@ -656,6 +652,64 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   ),
                 ],
 
+                const SizedBox(height: 24),
+
+                // Registration status section
+                const Text(
+                  'Registration Status',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(
+                        _attendanceDetails?['status'] ?? 'not_registered'),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _getStatusText(
+                        _attendanceDetails?['status'] ?? 'not_registered'),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                if (_attendanceDetails?['ticket_code'] != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Ticket Code: ${_attendanceDetails?['ticket_code']}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+                if (_attendanceDetails?['registration_date'] != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Registration Date: ${_formatDateTime(_attendanceDetails?['registration_date'])}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+                if (_attendanceDetails?['check_in_time'] != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Check-in Time: ${_formatDateTime(_attendanceDetails?['check_in_time'])}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+
                 const SizedBox(height: 32),
               ],
             ),
@@ -731,6 +785,16 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     return '$startDate - $endDate';
   }
 
+  String _formatDateTime(String? dateStr) {
+    if (dateStr == null) return '';
+    try {
+      final date = DateTime.parse(dateStr);
+      return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute}';
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
   Widget _buildBottomBar() {
     return Container(
       padding: const EdgeInsets.all(16.0),
@@ -771,5 +835,39 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         ),
       ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'registered':
+        return Colors.green;
+      case 'attended':
+        return Colors.blue;
+      case 'cancelled':
+        return Colors.red;
+      case 'pending_payment':
+        return Colors.orange;
+      case 'not_registered':
+        return Colors.grey;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _getStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'registered':
+        return 'Registered';
+      case 'attended':
+        return 'Attended';
+      case 'cancelled':
+        return 'Cancelled';
+      case 'pending_payment':
+        return 'Pending Payment';
+      case 'not_registered':
+        return 'Not Registered';
+      default:
+        return status;
+    }
   }
 }
