@@ -101,13 +101,8 @@ class _UserProfileScreenState extends State<UserProfileScreen>
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text('My Profile'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pushReplacementNamed(context, AppRouter.home);
-          },
-        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),

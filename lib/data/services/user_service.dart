@@ -195,6 +195,23 @@ class UserService {
   }
 
   Future<void> logout() async {
-    await _tokenService.clearToken();
+    try {
+      final token = await _tokenService.getToken();
+      if (token != null) {
+        final response = await http.post(
+          Uri.parse('${AppConstants.baseUrl}/auth/logout'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+          },
+        );
+
+        if (response.statusCode != 200) {
+          throw Exception('Failed to logout: ${response.statusCode}');
+        }
+      }
+    } finally {
+      await _tokenService.clearToken();
+    }
   }
 }

@@ -509,32 +509,89 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (currentUser == null) {
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.bookmark_border, size: 64),
-            const SizedBox(height: 16),
-            const Text(
-              'Please login to view your bookmarked events',
-              style: TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, AppRouter.login);
-              },
-              child: const Text('Login'),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.bookmark_border,
+                size: 48,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Save Your Favorite Events',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Login to bookmark events and access them anytime',
+                style: Theme.of(context).textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, AppRouter.login);
+                },
+                child: const Text('Login'),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, AppRouter.register);
+                },
+                child: const Text('Create New Account'),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     if (currentUser.userType != 'user') {
-      return const Center(
-        child: Text(
-          'This feature is only available for regular users',
-          style: TextStyle(fontSize: 16),
+      return Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.errorContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.lock,
+                size: 64,
+                color: Theme.of(context).colorScheme.error,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Access Restricted',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'This feature is only available for regular users. Please use a regular user account to access bookmarks.',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.7),
+                  ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       );
     }

@@ -2,18 +2,45 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/config/app_constants.dart';
 import '../../data/models/event_model.dart';
+import '../../data/services/event_service.dart';
 
 class EventCard extends StatelessWidget {
   final EventModel event;
   final VoidCallback? onTap;
   final bool showBookmarkButton;
+  final Function(bool)? onBookmarkChanged;
 
   const EventCard({
     Key? key,
     required this.event,
     this.onTap,
     this.showBookmarkButton = true,
+    this.onBookmarkChanged,
   }) : super(key: key);
+
+  Future<void> _toggleBookmark(BuildContext context) async {
+    try {
+      final eventService = EventService();
+      if (event.isBookmarked) {
+        await eventService.removeBookmark(event.id);
+      } else {
+        await eventService.addBookmark(event.id);
+      }
+      if (onBookmarkChanged != null) {
+        onBookmarkChanged!(!event.isBookmarked);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Failed to ${event.isBookmarked ? 'remove' : 'add'} bookmark: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,33 +101,6 @@ class EventCard extends StatelessWidget {
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
-                      ),
-                    ),
-                  ),
-                if (showBookmarkButton)
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: colorScheme.surface.withOpacity(0.7),
-                        shape: BoxShape.circle,
-                      ),
-                      child: IconButton(
-                        icon: Icon(
-                          event.isBookmarked
-                              ? Icons.bookmark
-                              : Icons.bookmark_border,
-                          color: event.isBookmarked
-                              ? colorScheme.primary
-                              : colorScheme.onSurface,
-                        ),
-                        onPressed: () {
-                          // This would be handled by a state management solution
-                          // in a real app
-                        },
-                        tooltip:
-                            event.isBookmarked ? 'Remove bookmark' : 'Bookmark',
                       ),
                     ),
                   ),

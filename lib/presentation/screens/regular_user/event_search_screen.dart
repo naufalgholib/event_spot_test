@@ -190,6 +190,7 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text(_searchController.text.isEmpty
             ? 'Browse Events'
             : 'Search Results'),
@@ -682,6 +683,21 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
                 AppRouter.eventDetail,
                 arguments: {'eventId': event.id},
               );
+            },
+            onBookmarkChanged: (isBookmarked) {
+              setState(() {
+                final updatedEvent = event.copyWith(isBookmarked: isBookmarked);
+                final eventIndex =
+                    _filteredEvents.indexWhere((e) => e.id == event.id);
+                if (eventIndex != -1) {
+                  _filteredEvents[eventIndex] = updatedEvent;
+                }
+                final allEventIndex =
+                    _allEvents.indexWhere((e) => e.id == event.id);
+                if (allEventIndex != -1) {
+                  _allEvents[allEventIndex] = updatedEvent;
+                }
+              });
             },
           ),
         );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/mock_user_repository.dart';
+import '../../data/services/user_service.dart';
 import '../constants/app_constants.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -62,12 +63,19 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _userRepository.logout();
+      final userService = UserService();
+      await userService.logout();
+
       _currentUser = null;
       // Clear saved user data
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(AppConstants.userDataKey);
+      await prefs.remove(AppConstants.tokenKey);
+
+      // Reset app state
+      notifyListeners();
     } catch (e) {
+      print('Error during logout: $e');
       rethrow;
     } finally {
       _isLoading = false;
