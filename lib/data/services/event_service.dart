@@ -328,12 +328,8 @@ class EventService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
-        if (responseData['status'] == 'success') {
-          return responseData['data'];
-        } else {
-          throw Exception(
-              responseData['message'] ?? 'Failed to register for event');
-        }
+        // Return data directly if status code is success
+        return responseData['data'] ?? {'status': 'registered'};
       } else {
         final errorData = jsonDecode(response.body);
         throw Exception(errorData['message'] ??

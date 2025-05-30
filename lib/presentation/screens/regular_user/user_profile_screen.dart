@@ -181,7 +181,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           controller: _tabController,
           tabs: const [
             Tab(text: 'Upcoming'),
-            Tab(text: 'Past'),
+            Tab(text: 'History'),
             Tab(text: 'Bookmarked'),
           ],
         ),
@@ -192,7 +192,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
             controller: _tabController,
             children: [
               _buildEventList(_upcomingEvents, 'No upcoming events'),
-              _buildEventList(_pastEvents, 'No past events'),
+              _buildEventList(_pastEvents, 'No history events'),
               _buildEventList(_bookmarkedEvents, 'No bookmarked events'),
             ],
           ),

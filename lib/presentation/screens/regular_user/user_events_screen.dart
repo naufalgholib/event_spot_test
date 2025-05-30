@@ -118,7 +118,7 @@ class _UserEventsScreenState extends State<UserEventsScreen>
                       controller: _tabController,
                       tabs: const [
                         Tab(text: 'Upcoming'),
-                        Tab(text: 'Past'),
+                        Tab(text: 'History'),
                       ],
                     ),
                     Expanded(
@@ -131,7 +131,7 @@ class _UserEventsScreenState extends State<UserEventsScreen>
                           ),
                           _buildEventList(
                             _pastEvents,
-                            'No past events found.\nYour event history will appear here.',
+                            'No history events found.\nYour event history will appear here.',
                           ),
                         ],
                       ),
