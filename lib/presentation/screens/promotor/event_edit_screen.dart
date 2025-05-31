@@ -1,11 +1,15 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/category_model.dart';
-import '../../../data/repositories/mock_event_repository.dart';
 import '../../../data/services/category_service.dart';
+import '../../../data/services/event_service.dart';
+import '../../../data/models/event_model.dart';
 
 class EventEditScreen extends StatefulWidget {
   final int eventId;
@@ -17,8 +21,9 @@ class EventEditScreen extends StatefulWidget {
 }
 
 class _EventEditScreenState extends State<EventEditScreen> {
-  final MockEventRepository _repository = MockEventRepository();
+  final EventService _eventService = EventService();
   final CategoryService _categoryService = CategoryService();
+  Completer<GoogleMapController> _mapControllerCompleter = Completer();
 
   // Form controllers
   final TextEditingController _titleController = TextEditingController();
@@ -31,9 +36,8 @@ class _EventEditScreenState extends State<EventEditScreen> {
   // Date and time controllers
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now().add(const Duration(hours: 2));
-  DateTime _registrationStart = DateTime.now().subtract(
-    const Duration(days: 1),
-  );
+  DateTime _registrationStart =
+      DateTime.now().subtract(const Duration(days: 1));
   DateTime _registrationEnd = DateTime.now().subtract(const Duration(hours: 1));
 
   // Form values
@@ -47,6 +51,13 @@ class _EventEditScreenState extends State<EventEditScreen> {
 
   // Form key for validation
   final _formKey = GlobalKey<FormState>();
+
+  // Map controller
+  Set<Marker> _markers = {};
+  LatLng? _selectedLocation;
+  bool _isMapCreated = false;
+  bool _isMapLoading = true;
+  GoogleMapController? _mapController;
 
   @override
   void initState() {
@@ -63,63 +74,99 @@ class _EventEditScreenState extends State<EventEditScreen> {
     _addressController.dispose();
     _maxAttendeesController.dispose();
     _priceController.dispose();
+    _mapController?.dispose();
     super.dispose();
   }
 
   Future<void> _loadEventData() async {
     try {
-      final event = await _repository.getEventById(widget.eventId);
+      final event = await _eventService.getPromotorEventDetail(widget.eventId);
 
-      if (event != null) {
-        setState(() {
-          _titleController.text = event.title;
-          _descriptionController.text = event.description;
-          _locationNameController.text = event.locationName;
-          _addressController.text = event.address;
-          _maxAttendeesController.text = event.maxAttendees?.toString() ?? '';
-          _priceController.text = event.price?.toString() ?? '';
+      setState(() {
+        _titleController.text = event.title;
+        _descriptionController.text = event.description;
+        _locationNameController.text = event.locationName;
+        _addressController.text = event.address;
+        _maxAttendeesController.text = event.maxAttendees?.toString() ?? '';
+        _priceController.text = event.price?.toString() ?? '';
 
-          _startDate = event.startDate;
-          _endDate = event.endDate;
-          _registrationStart = event.registrationStart;
-          _registrationEnd = event.registrationEnd;
+        _startDate = event.startDate;
+        _endDate = event.endDate;
+        _registrationStart = event.registrationStart;
+        _registrationEnd = event.registrationEnd;
 
-          _selectedCategoryId = event.categoryId;
-          _isFree = event.isFree;
+        _selectedCategoryId = event.categoryId;
+        _isFree = event.isFree;
 
-          // Load images
-          if (event.posterImage != null) {
+        // Set map location if coordinates exist
+        if (event.latitude != null && event.longitude != null) {
+          _selectedLocation = LatLng(
+            event.latitude!,
+            event.longitude!,
+          );
+          _markers = {
+            Marker(
+              markerId: const MarkerId('event_location'),
+              position: _selectedLocation!,
+              infoWindow: InfoWindow(
+                title: event.locationName,
+                snippet: event.address,
+              ),
+            ),
+          };
+        }
+
+        // Load images with proper URL handling
+        if (event.posterImage != null) {
+          if (event.posterImage!.startsWith('http')) {
             _eventImages.add(event.posterImage!);
+          } else {
+            // Handle local file path
+            _eventImages.add(File(event.posterImage!));
           }
+        }
 
-          if (event.images != null) {
-            for (var image in event.images!) {
+        if (event.images != null) {
+          for (var image in event.images!) {
+            if (image.imagePath.startsWith('http')) {
               if (!_eventImages.contains(image.imagePath)) {
                 _eventImages.add(image.imagePath);
               }
+            } else {
+              // Handle local file path
+              final file = File(image.imagePath);
+              if (!_eventImages.contains(file)) {
+                _eventImages.add(file);
+              }
             }
           }
+        }
 
-          _isLoadingData = false;
-        });
-      } else {
-        // Event not found
+        _isLoadingData = false;
+      });
+
+      // Move camera to event location after map is created
+      if (_isMapCreated && _selectedLocation != null) {
+        final controller = await _mapControllerCompleter.future;
+        controller.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: _selectedLocation!,
+              zoom: 15,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Event not found!'),
+          SnackBar(
+            content: Text('Failed to load event data: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
         Navigator.pop(context);
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to load event data: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      Navigator.pop(context);
     }
   }
 
@@ -142,66 +189,62 @@ class _EventEditScreenState extends State<EventEditScreen> {
     }
   }
 
-  Future<void> _selectDate(
-    BuildContext context,
-    DateTime initialDate,
-    Function(DateTime) onDateSelected,
-  ) async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: DateTime.now().subtract(const Duration(days: 365)),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
-    );
+  Future<void> _onMapCreated(GoogleMapController controller) async {
+    _mapController = controller;
+    if (!_mapControllerCompleter.isCompleted) {
+      _mapControllerCompleter.complete(controller);
+      setState(() {
+        _isMapCreated = true;
+        _isMapLoading = false;
+      });
 
-    if (pickedDate != null) {
-      final TimeOfDay? pickedTime = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.fromDateTime(initialDate),
-      );
-
-      if (pickedTime != null) {
-        final DateTime selectedDateTime = DateTime(
-          pickedDate.year,
-          pickedDate.month,
-          pickedDate.day,
-          pickedTime.hour,
-          pickedTime.minute,
+      // Move camera to event location if exists
+      if (_selectedLocation != null) {
+        await controller.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: _selectedLocation!,
+              zoom: 15,
+            ),
+          ),
         );
-
-        onDateSelected(selectedDateTime);
       }
     }
   }
 
-  String _formatDateTime(DateTime dateTime) {
-    return DateFormat('MMM dd, yyyy • h:mm a').format(dateTime);
-  }
-
-  Future<void> _addImage() async {
-    try {
-      final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-
-      if (image != null) {
-        setState(() {
-          _eventImages.add(image.path);
-        });
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error selecting image: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+  void _onMapTap(LatLng location) {
+    if (!_isMapLoading) {
+      setState(() {
+        _selectedLocation = location;
+        _markers = {
+          Marker(
+            markerId: const MarkerId('event_location'),
+            position: location,
+            infoWindow: InfoWindow(
+              title: _locationNameController.text,
+              snippet: _addressController.text,
+            ),
+            draggable: true,
+            onDragEnd: (newPosition) {
+              setState(() {
+                _selectedLocation = newPosition;
+                _markers = {
+                  Marker(
+                    markerId: const MarkerId('event_location'),
+                    position: newPosition,
+                    infoWindow: InfoWindow(
+                      title: _locationNameController.text,
+                      snippet: _addressController.text,
+                    ),
+                    draggable: true,
+                  ),
+                };
+              });
+            },
+          ),
+        };
+      });
     }
-  }
-
-  void _removeImage(int index) {
-    setState(() {
-      _eventImages.removeAt(index);
-    });
   }
 
   Future<void> _saveEvent() async {
@@ -213,23 +256,53 @@ class _EventEditScreenState extends State<EventEditScreen> {
       _isSaving = true;
     });
 
-    // Simulate API call with a delay
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      final eventData = {
+        'title': _titleController.text,
+        'description': _descriptionController.text,
+        'location_name': _locationNameController.text,
+        'address': _addressController.text,
+        'start_date': _startDate.toIso8601String(),
+        'end_date': _endDate.toIso8601String(),
+        'registration_start': _registrationStart.toIso8601String(),
+        'registration_end': _registrationEnd.toIso8601String(),
+        'is_free': _isFree,
+        'price': _isFree ? null : double.parse(_priceController.text),
+        'max_attendees': _maxAttendeesController.text.isEmpty
+            ? null
+            : int.parse(_maxAttendeesController.text),
+        'category_id': _selectedCategoryId,
+        'latitude': _selectedLocation?.latitude,
+        'longitude': _selectedLocation?.longitude,
+      };
 
-    setState(() {
-      _isSaving = false;
-    });
+      await _eventService.updatePromotorEvent(widget.eventId, eventData);
 
-    // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Event updated successfully!'),
-        backgroundColor: Colors.green,
-      ),
-    );
-
-    // Navigate back
-    Navigator.pop(context);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Event updated successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update event: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
   }
 
   @override
@@ -238,23 +311,6 @@ class _EventEditScreenState extends State<EventEditScreen> {
       appBar: AppBar(
         title: const Text('Edit Event'),
         centerTitle: true,
-        actions: [
-          if (!_isLoadingData && !_isLoadingCategories)
-            TextButton.icon(
-              onPressed: _isSaving ? null : _saveEvent,
-              icon: _isSaving
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Icon(Icons.save, color: Colors.white),
-              label: const Text('Save', style: TextStyle(color: Colors.white)),
-            ),
-        ],
       ),
       body: _isLoadingData || _isLoadingCategories
           ? const Center(child: CircularProgressIndicator())
@@ -395,22 +451,52 @@ class _EventEditScreenState extends State<EventEditScreen> {
           },
         ),
         const SizedBox(height: 24),
-        // In a real app, you would have a map widget here
-        Container(
-          height: 150,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.grey[300],
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Center(
-            child: Icon(Icons.map, size: 48, color: Colors.grey),
+        RepaintBoundary(
+          child: Container(
+            height: 300,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Stack(
+                children: [
+                  GoogleMap(
+                    initialCameraPosition: CameraPosition(
+                      target:
+                          _selectedLocation ?? const LatLng(-6.2088, 106.8456),
+                      zoom: 15,
+                    ),
+                    markers: _markers,
+                    onMapCreated: _onMapCreated,
+                    onTap: _onMapTap,
+                    myLocationEnabled: true,
+                    myLocationButtonEnabled: true,
+                    zoomControlsEnabled: true,
+                    mapToolbarEnabled: true,
+                    compassEnabled: true,
+                    rotateGesturesEnabled: true,
+                    tiltGesturesEnabled: true,
+                    mapType: MapType.normal,
+                  ),
+                  if (_isMapLoading)
+                    Container(
+                      color: Colors.white.withOpacity(0.7),
+                      child: const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
         const Padding(
           padding: EdgeInsets.symmetric(vertical: 8.0),
           child: Text(
-            'Map integration for exact location',
+            'Tap on the map to select the exact location. You can drag the marker to adjust the position.',
             style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
           ),
         ),
@@ -650,23 +736,41 @@ class _EventEditScreenState extends State<EventEditScreen> {
                 ),
                 itemCount: _eventImages.length,
                 itemBuilder: (context, index) {
+                  final image = _eventImages[index];
                   return Stack(
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: _eventImages[index] is String &&
-                                _eventImages[index].startsWith('http')
+                        child: image is String
                             ? Image.network(
-                                _eventImages[index],
+                                image,
                                 width: double.infinity,
                                 height: double.infinity,
                                 fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.grey[200],
+                                    child: const Icon(
+                                      Icons.error_outline,
+                                      color: Colors.grey,
+                                    ),
+                                  );
+                                },
                               )
                             : Image.file(
-                                File(_eventImages[index]),
+                                image as File,
                                 width: double.infinity,
                                 height: double.infinity,
                                 fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.grey[200],
+                                    child: const Icon(
+                                      Icons.error_outline,
+                                      color: Colors.grey,
+                                    ),
+                                  );
+                                },
                               ),
                       ),
                       Positioned(
@@ -759,5 +863,67 @@ class _EventEditScreenState extends State<EventEditScreen> {
         return null;
       },
     );
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return DateFormat('MMM dd, yyyy • h:mm a').format(dateTime);
+  }
+
+  Future<void> _selectDate(
+    BuildContext context,
+    DateTime initialDate,
+    Function(DateTime) onDateSelected,
+  ) async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+    );
+
+    if (pickedDate != null) {
+      final TimeOfDay? pickedTime = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(initialDate),
+      );
+
+      if (pickedTime != null) {
+        final DateTime selectedDateTime = DateTime(
+          pickedDate.year,
+          pickedDate.month,
+          pickedDate.day,
+          pickedTime.hour,
+          pickedTime.minute,
+        );
+
+        onDateSelected(selectedDateTime);
+      }
+    }
+  }
+
+  Future<void> _addImage() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+      if (image != null) {
+        setState(() {
+          _eventImages.add(image.path);
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error selecting image: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _eventImages.removeAt(index);
+    });
   }
 }

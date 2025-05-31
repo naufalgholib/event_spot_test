@@ -372,4 +372,139 @@ class EventService {
       throw Exception('Error: $e');
     }
   }
+
+  Future<List<EventModel>> getPromotorEvents() async {
+    try {
+      final token = await _tokenService.getToken();
+      if (token == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final response = await http.get(
+        Uri.parse('${AppConstants.baseUrl}/promotor/events'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        if (responseData.containsKey('data')) {
+          final List<dynamic> data = responseData['data'];
+          return data.map((json) => EventModel.fromJson(json)).toList();
+        }
+        return [];
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['message'] ??
+            'Failed to load promotor events: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Failed to load promotor events');
+    }
+  }
+
+  Future<EventModel> getPromotorEventDetail(int eventId) async {
+    try {
+      final token = await _tokenService.getToken();
+      if (token == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final response = await http.get(
+        Uri.parse('${AppConstants.baseUrl}/promotor/events/$eventId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        // Check if data exists directly in response
+        if (responseData.containsKey('data')) {
+          return EventModel.fromJson(responseData['data']);
+        }
+        // If no data field, try to parse the response directly
+        return EventModel.fromJson(responseData);
+      } else if (response.statusCode == 403) {
+        throw Exception(
+            'Unauthorized: You do not have permission to view this event');
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['message'] ??
+            'Failed to load event detail: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  Future<EventModel> updatePromotorEvent(
+      int eventId, Map<String, dynamic> eventData) async {
+    try {
+      final token = await _tokenService.getToken();
+      if (token == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final response = await http.put(
+        Uri.parse('${AppConstants.baseUrl}/promotor/events/$eventId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(eventData),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        if (responseData.containsKey('data')) {
+          return EventModel.fromJson(responseData['data']);
+        }
+        throw Exception('No data found');
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['message'] ??
+            'Failed to update event: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
+
+  Future<EventModel> createPromotorEvent(Map<String, dynamic> eventData) async {
+    try {
+      final token = await _tokenService.getToken();
+      if (token == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final response = await http.post(
+        Uri.parse('${AppConstants.baseUrl}/promotor/events'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode(eventData),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        if (responseData.containsKey('data')) {
+          return EventModel.fromJson(responseData['data']);
+        }
+        throw Exception('No data found');
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['message'] ??
+            'Failed to create event: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error: $e');
+    }
+  }
 }

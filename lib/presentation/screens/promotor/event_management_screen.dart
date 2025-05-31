@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/event_model.dart';
-import '../../../data/repositories/mock_event_repository.dart';
+import '../../../data/services/event_service.dart';
 import '../../../core/config/app_router.dart';
 
 class EventManagementScreen extends StatefulWidget {
@@ -13,7 +14,7 @@ class EventManagementScreen extends StatefulWidget {
 
 class _EventManagementScreenState extends State<EventManagementScreen>
     with SingleTickerProviderStateMixin {
-  final MockEventRepository _eventRepository = MockEventRepository();
+  final EventService _eventService = EventService();
   bool _isLoading = true;
   List<EventModel> _promotorEvents = [];
   List<EventModel> _filteredEvents = [];
@@ -57,11 +58,8 @@ class _EventManagementScreenState extends State<EventManagementScreen>
       _isLoading = true;
     });
 
-    // Mock promotor ID - in a real app, this would come from auth
-    const int promotorId = 2;
-
     try {
-      final events = await _eventRepository.getEventsByPromoter(promotorId);
+      final events = await _eventService.getPromotorEvents();
       setState(() {
         _promotorEvents = events;
         _filterEvents();
@@ -72,38 +70,60 @@ class _EventManagementScreenState extends State<EventManagementScreen>
         _isLoading = false;
       });
       // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to load events: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load events: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
   void _filterEvents() {
     List<EventModel> filtered = [];
-    final now = DateTime.now();
+    final now = DateTime.now().toUtc();
 
     // Filter by tab (status)
     if (_tabController.index == 0) {
       // Upcoming events
-      filtered = _promotorEvents
-          .where((event) => event.startDate.isAfter(now))
-          .toList();
+      filtered = _promotorEvents.where((event) {
+        // Event is upcoming if it hasn't started yet
+        final isUpcoming = event.startDate.isAfter(now);
+        return isUpcoming;
+      }).toList();
     } else if (_tabController.index == 1) {
       // Ongoing events
-      filtered = _promotorEvents
-          .where(
-            (event) =>
-                event.startDate.isBefore(now) && event.endDate.isAfter(now),
-          )
-          .toList();
+      filtered = _promotorEvents.where(
+        (event) {
+          // Convert dates to UTC for comparison
+          final startDate = event.startDate.toUtc();
+          final endDate = event.endDate.toUtc();
+
+          // Check if event is on the same day
+          final isSameDay = startDate.year == now.year &&
+              startDate.month == now.month &&
+              startDate.day == now.day;
+
+          // Event has started if:
+          // 1. Start date is before now, OR
+          // 2. It's the same day and start time has passed
+          final hasStarted = startDate.isBefore(now) ||
+              (isSameDay && startDate.hour <= now.hour);
+
+          // Event hasn't ended
+          final hasNotEnded = endDate.isAfter(now);
+
+          return hasStarted && hasNotEnded;
+        },
+      ).toList();
     } else {
       // Past events
-      filtered = _promotorEvents
-          .where((event) => event.endDate.isBefore(now))
-          .toList();
+      filtered = _promotorEvents.where((event) {
+        final isPast = event.endDate.toUtc().isBefore(now);
+        return isPast;
+      }).toList();
     }
 
     // Apply search filter if there's a query
@@ -150,6 +170,11 @@ class _EventManagementScreenState extends State<EventManagementScreen>
     _filterEvents();
   }
 
+  String _formatDateTime(DateTime dateTime) {
+    final dateFormat = DateFormat('EEEE, MMMM d yyyy • h:mm a');
+    return dateFormat.format(dateTime);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -163,7 +188,7 @@ class _EventManagementScreenState extends State<EventManagementScreen>
             Tab(text: 'Ongoing'),
             Tab(text: 'Past'),
           ],
-          labelColor: AppTheme.primaryColor,
+          labelColor: AppTheme.backgroundColor,
           indicatorColor: AppTheme.primaryColor,
           unselectedLabelColor: Colors.grey,
         ),
@@ -381,7 +406,7 @@ class _EventManagementScreenState extends State<EventManagementScreen>
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      _eventRepository.formatDateTime(event.startDate),
+                      _formatDateTime(event.startDate),
                       style: TextStyle(color: Colors.grey[600]),
                     ),
                   ],
@@ -430,21 +455,22 @@ class _EventManagementScreenState extends State<EventManagementScreen>
                         label: const Text('Edit'),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: AppTheme.primaryColor),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     // View Attendees button
                     Expanded(
-                      child: ElevatedButton.icon(
+                      child: OutlinedButton.icon(
                         onPressed: () {
                           // Navigate to attendee list
                         },
                         icon: const Icon(Icons.people, size: 16),
                         label: const Text('Attendees'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryColor,
-                          foregroundColor: Colors.white,
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppTheme.primaryColor),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
                         ),
                       ),
                     ),
@@ -463,8 +489,8 @@ class _EventManagementScreenState extends State<EventManagementScreen>
                         icon: const Icon(Icons.bar_chart, size: 16),
                         label: const Text('Statistics'),
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: Colors.grey[400]!),
-                          foregroundColor: Colors.grey[700],
+                          side: const BorderSide(color: AppTheme.primaryColor),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
                         ),
                       ),
                     ),
@@ -478,8 +504,8 @@ class _EventManagementScreenState extends State<EventManagementScreen>
                         icon: const Icon(Icons.comment, size: 16),
                         label: const Text('Comments'),
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: Colors.grey[400]!),
-                          foregroundColor: Colors.grey[700],
+                          side: const BorderSide(color: AppTheme.primaryColor),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
                         ),
                       ),
                     ),
