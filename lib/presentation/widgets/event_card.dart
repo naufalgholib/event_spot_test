@@ -1,19 +1,52 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/config/app_constants.dart';
 import '../../data/models/event_model.dart';
+import '../../data/services/event_service.dart';
 
 class EventCard extends StatelessWidget {
   final EventModel event;
   final VoidCallback? onTap;
   final bool showBookmarkButton;
+  final Function(bool)? onBookmarkChanged;
+  final String? status;
+  final bool showStatus;
 
   const EventCard({
     Key? key,
     required this.event,
     this.onTap,
     this.showBookmarkButton = true,
+    this.onBookmarkChanged,
+    this.status,
+    this.showStatus = true,
   }) : super(key: key);
+
+  Future<void> _toggleBookmark(BuildContext context) async {
+    try {
+      final eventService = EventService();
+      if (event.isBookmarked) {
+        await eventService.removeBookmark(event.id);
+      } else {
+        await eventService.addBookmark(event.id);
+      }
+      if (onBookmarkChanged != null) {
+        onBookmarkChanged!(!event.isBookmarked);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Failed to ${event.isBookmarked ? 'remove' : 'add'} bookmark: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,31 +110,26 @@ class EventCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                if (showBookmarkButton)
+                if (showStatus && status != null)
                   Positioned(
                     top: 8,
                     right: 8,
                     child: Container(
-                      decoration: BoxDecoration(
-                        color: colorScheme.surface.withOpacity(0.7),
-                        shape: BoxShape.circle,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
                       ),
-                      child: IconButton(
-                        icon: Icon(
-                          event.isBookmarked
-                              ? Icons.bookmark
-                              : Icons.bookmark_border,
-                          color:
-                              event.isBookmarked
-                                  ? colorScheme.primary
-                                  : colorScheme.onSurface,
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(status!),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        _getStatusText(status!),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
-                        onPressed: () {
-                          // This would be handled by a state management solution
-                          // in a real app
-                        },
-                        tooltip:
-                            event.isBookmarked ? 'Remove bookmark' : 'Bookmark',
                       ),
                     ),
                   ),
@@ -190,7 +218,9 @@ class EventCard extends StatelessWidget {
                       Text(
                         event.isFree
                             ? 'Free'
-                            : '\$${event.price?.toStringAsFixed(2) ?? '0.00'}',
+                            : event.price != null
+                                ? '\$${event.price!.toStringAsFixed(2)}'
+                                : 'Free',
                         style: TextStyle(
                           color:
                               event.isFree ? Colors.green : colorScheme.primary,
@@ -206,5 +236,39 @@ class EventCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'registered':
+        return Colors.green;
+      case 'attended':
+        return Colors.blue;
+      case 'cancelled':
+        return Colors.red;
+      case 'pending_payment':
+        return Colors.orange;
+      case 'not_registered':
+        return Colors.grey;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _getStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'registered':
+        return 'Registered';
+      case 'attended':
+        return 'Attended';
+      case 'cancelled':
+        return 'Cancelled';
+      case 'pending_payment':
+        return 'Pending Payment';
+      case 'not_registered':
+        return 'Not Registered';
+      default:
+        return status;
+    }
   }
 }

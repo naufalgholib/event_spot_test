@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/config/app_router.dart';
-import '../../../core/config/app_constants.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../data/models/event_model.dart';
-import '../../../data/repositories/mock_event_repository.dart';
+import '../../../data/services/event_service.dart';
 import '../../widgets/common_widgets.dart';
 import '../../widgets/event_card.dart';
 
 class UserEventsScreen extends StatefulWidget {
-  const UserEventsScreen({Key? key}) : super(key: key);
+  const UserEventsScreen({super.key});
 
   @override
   State<UserEventsScreen> createState() => _UserEventsScreenState();
@@ -16,19 +17,18 @@ class UserEventsScreen extends StatefulWidget {
 
 class _UserEventsScreenState extends State<UserEventsScreen>
     with SingleTickerProviderStateMixin {
-  final MockEventRepository _eventRepository = MockEventRepository();
+  final EventService _eventService = EventService();
   late TabController _tabController;
-
-  bool _isLoading = true;
   List<EventModel>? _upcomingEvents;
   List<EventModel>? _pastEvents;
+  bool _isLoading = true;
   String? _error;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadRegisteredEvents();
+    _loadData();
   }
 
   @override
@@ -37,25 +37,54 @@ class _UserEventsScreenState extends State<UserEventsScreen>
     super.dispose();
   }
 
-  Future<void> _loadRegisteredEvents() async {
+  Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
     try {
-      final registeredEvents = await _eventRepository.getRegisteredEvents();
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      if (!authProvider.isLoggedIn) {
+        throw Exception('Please log in to view your events');
+      }
 
-      final now = DateTime.now();
-      final upcoming =
-          registeredEvents.where((e) => e.startDate.isAfter(now)).toList();
-      final past =
-          registeredEvents.where((e) => e.startDate.isBefore(now)).toList();
+      // Load upcoming events
+      try {
+        final upcoming = await _eventService.getUpcomingEvents();
+        setState(() {
+          _upcomingEvents = upcoming;
+        });
+      } catch (e) {
+        // If error is about no events, just set empty list
+        if (e.toString().contains('Failed to load upcoming events')) {
+          setState(() {
+            _upcomingEvents = [];
+          });
+        } else {
+          rethrow;
+        }
+      }
+
+      // Load event history
+      try {
+        final past = await _eventService.getEventHistory();
+        setState(() {
+          _pastEvents = past;
+        });
+      } catch (e) {
+        // If error is about no events, just set empty list
+        if (e.toString().contains('Failed to load event history')) {
+          setState(() {
+            _pastEvents = [];
+          });
+        } else {
+          rethrow;
+        }
+      }
 
       if (mounted) {
         setState(() {
-          _upcomingEvents = upcoming;
-          _pastEvents = past;
           _isLoading = false;
         });
       }
@@ -70,11 +99,7 @@ class _UserEventsScreenState extends State<UserEventsScreen>
   }
 
   void _onEventTapped(EventModel event) {
-    Navigator.pushNamed(
-      context,
-      AppRouter.eventDetail,
-      arguments: event.id,
-    ).then((_) => _loadRegisteredEvents()); // Refresh on return
+    Navigator.pushNamed(context, AppRouter.eventDetail, arguments: event.id);
   }
 
   @override
@@ -82,29 +107,35 @@ class _UserEventsScreenState extends State<UserEventsScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Events'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pushReplacementNamed(context, AppRouter.home);
-          },
-        ),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [Tab(text: 'Upcoming'), Tab(text: 'Past')],
-        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? ErrorStateWidget(
-                  message: _error!,
-                  onRetry: _loadRegisteredEvents,
-                )
-              : TabBarView(
-                  controller: _tabController,
+              ? ErrorStateWidget(message: _error!, onRetry: _loadData)
+              : Column(
                   children: [
-                    _buildEventList(_upcomingEvents, 'No upcoming events'),
-                    _buildEventList(_pastEvents, 'No past events'),
+                    TabBar(
+                      controller: _tabController,
+                      tabs: const [
+                        Tab(text: 'Upcoming'),
+                        Tab(text: 'History'),
+                      ],
+                    ),
+                    Expanded(
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildEventList(
+                            _upcomingEvents,
+                            'No upcoming events registered.\nFind and register for events to see them here!',
+                          ),
+                          _buildEventList(
+                            _pastEvents,
+                            'No history events found.\nYour event history will appear here.',
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
     );
@@ -112,17 +143,60 @@ class _UserEventsScreenState extends State<UserEventsScreen>
 
   Widget _buildEventList(List<EventModel>? events, String emptyMessage) {
     if (events == null || events.isEmpty) {
-      return EmptyStateWidget(message: emptyMessage, icon: Icons.event_busy);
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.event_busy,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              emptyMessage,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pushNamed(context, AppRouter.home);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              icon: const Icon(Icons.search, color: Colors.white),
+              label: const Text(
+                'Browse Events',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(AppConstants.defaultPadding),
+      padding: const EdgeInsets.all(16),
       itemCount: events.length,
       itemBuilder: (context, index) {
         final event = events[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
-          child: EventCard(event: event, onTap: () => _onEventTapped(event)),
+          child: EventCard(
+            event: event,
+            onTap: () => _onEventTapped(event),
+          ),
         );
       },
     );

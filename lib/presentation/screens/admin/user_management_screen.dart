@@ -138,11 +138,17 @@ class _UserManagementScreenState extends State<UserManagementScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('User Management'),
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
+        elevation: 2,
         bottom: TabBar(
           controller: _tabController,
+          indicatorColor: Colors.white,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
           tabs: const [
-            Tab(text: 'All Users'),
-            Tab(text: 'Regular Users'),
+            Tab(text: 'All User'),
+            Tab(text: 'Users'),
             Tab(text: 'Promoters'),
           ],
         ),

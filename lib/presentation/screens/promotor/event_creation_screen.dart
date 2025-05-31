@@ -1,11 +1,13 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/category_model.dart';
-import '../../../data/repositories/mock_event_repository.dart';
 import '../../../data/services/category_service.dart';
+import '../../../data/services/event_service.dart';
 
 class EventCreationScreen extends StatefulWidget {
   const EventCreationScreen({Key? key}) : super(key: key);
@@ -15,7 +17,7 @@ class EventCreationScreen extends StatefulWidget {
 }
 
 class _EventCreationScreenState extends State<EventCreationScreen> {
-  final MockEventRepository _repository = MockEventRepository();
+  final EventService _eventService = EventService();
   final CategoryService _categoryService = CategoryService();
 
   // Form controllers
@@ -35,11 +37,17 @@ class _EventCreationScreenState extends State<EventCreationScreen> {
   // Form values
   int? _selectedCategoryId;
   bool _isLoadingCategories = true;
+  bool _isSaving = false;
   List<CategoryModel> _categories = [];
   bool _isFree = true;
   bool _isUsingAI = false;
   bool _isGeneratingDescription = false;
   final List<dynamic> _eventImages = [];
+
+  // Map controller
+  Completer<GoogleMapController> _mapControllerCompleter = Completer();
+  Set<Marker> _markers = {};
+  LatLng? _selectedLocation;
 
   // Form key for validation
   final _formKey = GlobalKey<FormState>();
@@ -61,6 +69,9 @@ class _EventCreationScreenState extends State<EventCreationScreen> {
     _addressController.dispose();
     _maxAttendeesController.dispose();
     _priceController.dispose();
+    if (_mapControllerCompleter.isCompleted) {
+      _mapControllerCompleter.future.then((controller) => controller.dispose());
+    }
     super.dispose();
   }
 
@@ -213,21 +224,69 @@ Don't miss this opportunity to connect with like-minded individuals, learn from 
     return true;
   }
 
-  void _submitForm() {
+  Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    // In a real app, this would send data to the API
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Event created successfully!'),
-        backgroundColor: Colors.green,
-      ),
-    );
+    setState(() {
+      _isSaving = true;
+    });
 
-    // Navigate back
-    Navigator.pop(context);
+    try {
+      final eventData = {
+        'title': _titleController.text,
+        'description': _descriptionController.text,
+        'location_name': _locationNameController.text,
+        'address': _addressController.text,
+        'start_date': _startDate.toIso8601String(),
+        'end_date': _endDate.toIso8601String(),
+        'registration_start': _registrationStart.toIso8601String(),
+        'registration_end': _registrationEnd.toIso8601String(),
+        'is_free': _isFree,
+        'price': _isFree ? null : double.parse(_priceController.text),
+        'max_attendees': _maxAttendeesController.text.isEmpty
+            ? null
+            : int.parse(_maxAttendeesController.text),
+        'category_id': _selectedCategoryId,
+        'latitude': _selectedLocation?.latitude,
+        'longitude': _selectedLocation?.longitude,
+      };
+
+      // Upload images if any
+      if (_eventImages.isNotEmpty) {
+        // TODO: Implement image upload logic
+        // For now, we'll just use the first image as poster
+        eventData['poster_image'] = _eventImages[0];
+      }
+
+      await _eventService.createPromotorEvent(eventData);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Event created successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to create event: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
   }
 
   @override
@@ -438,6 +497,11 @@ Don't miss this opportunity to connect with like-minded individuals, learn from 
       content: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const Text(
+            'Location',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
           TextFormField(
             controller: _locationNameController,
             decoration: const InputDecoration(
@@ -467,22 +531,58 @@ Don't miss this opportunity to connect with like-minded individuals, learn from 
             },
           ),
           const SizedBox(height: 24),
-          // In a real app, you would have a map widget here
-          Container(
-            height: 200,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Center(
-              child: Icon(Icons.map, size: 64, color: Colors.grey),
+          RepaintBoundary(
+            child: Container(
+              height: 200,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: GoogleMap(
+                  initialCameraPosition: CameraPosition(
+                    target:
+                        _selectedLocation ?? const LatLng(-6.2088, 106.8456),
+                    zoom: 15,
+                  ),
+                  markers: _markers,
+                  onMapCreated: (controller) {
+                    if (!_mapControllerCompleter.isCompleted) {
+                      _mapControllerCompleter.complete(controller);
+                    }
+                  },
+                  onTap: (location) {
+                    setState(() {
+                      _selectedLocation = location;
+                      _markers = {
+                        Marker(
+                          markerId: const MarkerId('event_location'),
+                          position: location,
+                          infoWindow: InfoWindow(
+                            title: _locationNameController.text,
+                            snippet: _addressController.text,
+                          ),
+                        ),
+                      };
+                    });
+                  },
+                  myLocationEnabled: true,
+                  myLocationButtonEnabled: true,
+                  zoomControlsEnabled: true,
+                  mapToolbarEnabled: true,
+                  compassEnabled: false,
+                  rotateGesturesEnabled: false,
+                  tiltGesturesEnabled: false,
+                ),
+              ),
             ),
           ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 8.0),
             child: Text(
-              'Map integration will allow you to set exact location',
+              'Tap on the map to select the exact location',
               style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
             ),
           ),

@@ -1,3 +1,6 @@
+import 'event_image_model.dart';
+import 'event_tag_model.dart';
+
 class EventModel {
   final int id;
   final String title;
@@ -31,7 +34,7 @@ class EventModel {
   final int? totalAttendees;
   final bool isBookmarked;
   final List<EventImage>? images;
-  final List<EventTag>? tags;
+  final List<EventTagModel>? tags;
 
   EventModel({
     required this.id,
@@ -68,31 +71,50 @@ class EventModel {
   });
 
   factory EventModel.fromJson(Map<String, dynamic> json) {
-    return EventModel(
+    // Handle nested promotor object
+    final promotor = json['promotor'] as Map<String, dynamic>?;
+    final promotorId = promotor?['id'] as int? ?? json['promotor_id'] as int?;
+    final promotorName =
+        promotor?['name'] as String? ?? json['promotor_name'] as String? ?? '';
+
+    // Handle nested category object
+    final category = json['category'] as Map<String, dynamic>?;
+    final categoryId = category?['id'] as int? ?? json['category_id'] as int?;
+    final categoryName =
+        category?['name'] as String? ?? json['category_name'] as String? ?? '';
+
+    // Get registration dates with fallback
+    final registrationStart = json['registration_start']?.toString();
+    final registrationEnd = json['registration_end']?.toString();
+    final now = DateTime.now();
+
+    final event = EventModel(
       id: json['id'],
-      title: json['title'],
-      slug: json['slug'],
-      description: json['description'],
+      title: json['title']?.toString() ?? '',
+      slug: json['slug']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
       isAiGenerated: json['is_ai_generated'] == 1,
-      posterImage: json['poster_image'],
-      promotorId: json['promotor_id'],
-      promotorName: json['promotor_name'] ?? '',
-      categoryId: json['category_id'],
-      categoryName: json['category_name'] ?? '',
-      locationName: json['location_name'],
-      address: json['address'],
-      latitude:
-          json['latitude'] != null
-              ? double.parse(json['latitude'].toString())
-              : null,
-      longitude:
-          json['longitude'] != null
-              ? double.parse(json['longitude'].toString())
-              : null,
-      startDate: DateTime.parse(json['start_date']),
-      endDate: DateTime.parse(json['end_date']),
-      registrationStart: DateTime.parse(json['registration_start']),
-      registrationEnd: DateTime.parse(json['registration_end']),
+      posterImage: json['poster_image']?.toString(),
+      promotorId: promotorId ?? 0,
+      promotorName: promotorName,
+      categoryId: categoryId ?? 0,
+      categoryName: categoryName,
+      locationName: json['location_name']?.toString() ?? '',
+      address: json['address']?.toString() ?? '',
+      latitude: json['latitude'] != null
+          ? double.parse(json['latitude'].toString())
+          : null,
+      longitude: json['longitude'] != null
+          ? double.parse(json['longitude'].toString())
+          : null,
+      startDate: DateTime.parse(
+          json['start_date']?.toString() ?? now.toIso8601String()),
+      endDate: DateTime.parse(json['end_date']?.toString() ??
+          now.add(const Duration(days: 1)).toIso8601String()),
+      registrationStart:
+          DateTime.parse(registrationStart ?? now.toIso8601String()),
+      registrationEnd: DateTime.parse(registrationEnd ??
+          now.add(const Duration(days: 30)).toIso8601String()),
       isFree: json['is_free'] == 1,
       price:
           json['price'] != null ? double.parse(json['price'].toString()) : null,
@@ -101,21 +123,22 @@ class EventModel {
       isFeatured: json['is_featured'] == 1,
       isApproved: json['is_approved'] == 1,
       viewsCount: json['views_count'] ?? 0,
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
+      createdAt: DateTime.parse(
+          json['created_at']?.toString() ?? now.toIso8601String()),
+      updatedAt: DateTime.parse(
+          json['updated_at']?.toString() ?? now.toIso8601String()),
       totalAttendees: json['total_attendees'],
       isBookmarked: json['is_bookmarked'] == 1,
-      images:
-          json['images'] != null
-              ? (json['images'] as List)
-                  .map((i) => EventImage.fromJson(i))
-                  .toList()
-              : null,
-      tags:
-          json['tags'] != null
-              ? (json['tags'] as List).map((i) => EventTag.fromJson(i)).toList()
-              : null,
+      images: json['images'] != null
+          ? (json['images'] as List).map((i) => EventImage.fromJson(i)).toList()
+          : null,
+      tags: json['tags'] != null
+          ? (json['tags'] as List)
+              .map((i) => EventTagModel.fromJson(i))
+              .toList()
+          : null,
     );
+    return event;
   }
 
   Map<String, dynamic> toJson() {
@@ -193,7 +216,7 @@ class EventModel {
     int? totalAttendees,
     bool? isBookmarked,
     List<EventImage>? images,
-    List<EventTag>? tags,
+    List<EventTagModel>? tags,
   }) {
     return EventModel(
       id: id ?? this.id,
@@ -249,83 +272,8 @@ class EventModel {
 
   // Check if event is at full capacity
   bool get isFullCapacity {
-    if (maxAttendees == null || totalAttendees == null) return false;
-    return totalAttendees! >= maxAttendees!;
-  }
-}
-
-class EventImage {
-  final int id;
-  final int eventId;
-  final String imagePath;
-  final bool isPrimary;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-
-  EventImage({
-    required this.id,
-    required this.eventId,
-    required this.imagePath,
-    required this.isPrimary,
-    required this.createdAt,
-    required this.updatedAt,
-  });
-
-  factory EventImage.fromJson(Map<String, dynamic> json) {
-    return EventImage(
-      id: json['id'],
-      eventId: json['event_id'],
-      imagePath: json['image_path'],
-      isPrimary: json['is_primary'] == 1,
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'event_id': eventId,
-      'image_path': imagePath,
-      'is_primary': isPrimary ? 1 : 0,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
-    };
-  }
-}
-
-class EventTag {
-  final int id;
-  final String name;
-  final String slug;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-
-  EventTag({
-    required this.id,
-    required this.name,
-    required this.slug,
-    required this.createdAt,
-    required this.updatedAt,
-  });
-
-  factory EventTag.fromJson(Map<String, dynamic> json) {
-    return EventTag(
-      id: json['id'],
-      name: json['name'],
-      slug: json['slug'],
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'slug': slug,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
-    };
+    return maxAttendees != null &&
+        totalAttendees != null &&
+        totalAttendees! >= maxAttendees!;
   }
 }

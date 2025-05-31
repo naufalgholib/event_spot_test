@@ -169,6 +169,7 @@ class SimpleEventCard extends StatelessWidget {
   final String? date;
   final String? category;
   final bool? isFree;
+  final double? price;
   final VoidCallback onTap;
 
   const SimpleEventCard({
@@ -179,6 +180,7 @@ class SimpleEventCard extends StatelessWidget {
     this.date,
     this.category,
     this.isFree,
+    this.price,
     required this.onTap,
   });
 
@@ -304,15 +306,17 @@ class SimpleEventCard extends StatelessWidget {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: isFree!
-                                ? Colors.green.withOpacity(0.1)
-                                : Colors.orange.withOpacity(0.1),
+                            color: Colors.green.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            isFree! ? 'Free' : 'Paid',
+                            isFree!
+                                ? 'Free'
+                                : price != null
+                                    ? '\$${price!.toStringAsFixed(2)}'
+                                    : 'Free',
                             style: TextStyle(
-                              color: isFree! ? Colors.green : Colors.orange,
+                              color: Colors.green,
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),

@@ -8,8 +8,8 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../data/models/event_model.dart';
 import '../../../data/models/category_model.dart';
 import '../../../data/models/user_model.dart';
-import '../../../data/repositories/mock_event_repository.dart';
 import '../../../data/services/category_service.dart';
+import '../../../data/services/event_service.dart';
 import '../../widgets/common_widgets.dart';
 import 'event_search_screen.dart';
 import 'user_profile_screen.dart';
@@ -24,10 +24,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   final TextEditingController _searchController = TextEditingController();
-  final MockEventRepository _eventRepository = MockEventRepository();
   final CategoryService _categoryService = CategoryService();
+  final EventService _eventService = EventService();
 
-  List<EventModel>? _events;
+  List<EventModel> _events = [];
+  List<EventModel> _filteredEvents = [];
   List<CategoryModel>? _categories;
   bool _isLoading = true;
   String? _error;
@@ -51,12 +52,13 @@ class _HomeScreenState extends State<HomeScreen> {
     });
 
     try {
-      final events = await _eventRepository.getAllEvents();
+      final events = await _eventService.getEvents();
       final categories = await _categoryService.getCategories();
 
       if (mounted) {
         setState(() {
           _events = events;
+          _filteredEvents = events;
           _categories = categories;
           _isLoading = false;
         });
@@ -64,10 +66,41 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Failed to load data. Please try again.';
+          _error = 'Failed to load data: ${e.toString()}';
           _isLoading = false;
         });
       }
+    }
+  }
+
+  void _filterEvents(String query) {
+    if (query.isEmpty) {
+      setState(() {
+        _filteredEvents = _events;
+      });
+      return;
+    }
+
+    final lowercaseQuery = query.toLowerCase();
+    final filtered = _events.where((event) {
+      return event.title.toLowerCase().contains(lowercaseQuery) ||
+          event.description.toLowerCase().contains(lowercaseQuery) ||
+          event.locationName.toLowerCase().contains(lowercaseQuery) ||
+          event.categoryName.toLowerCase().contains(lowercaseQuery);
+    }).toList();
+
+    setState(() {
+      _filteredEvents = filtered;
+    });
+  }
+
+  void _onSearch(String query) {
+    if (query.isEmpty) {
+      setState(() {
+        _filteredEvents = _events;
+      });
+    } else {
+      _filterEvents(query);
     }
   }
 
@@ -91,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) => FilterBottomSheet(
         categories: _categories ?? [],
         onApplyFilters: (filters) {
-          // TODO: Apply filters
+          // Apply filters
           Navigator.pop(context);
         },
       ),
@@ -363,13 +396,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             child: EventSearchBar(
               controller: _searchController,
-              onSearch: (query) {
-                Navigator.pushNamed(
-                  context,
-                  AppRouter.searchResults,
-                  arguments: query,
-                );
-              },
+              onSearch: _onSearch,
               onFilterTap: _showFilterDialog,
             ),
           ),
@@ -444,7 +471,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return ErrorStateWidget(message: _error!, onRetry: _loadData);
     }
 
-    if (_events == null || _events!.isEmpty) {
+    if (_filteredEvents.isEmpty) {
       return const EmptyStateWidget(
         message: 'No events found',
         icon: Icons.event_busy,
@@ -453,9 +480,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return ListView.builder(
       padding: const EdgeInsets.all(AppConstants.defaultPadding),
-      itemCount: _events!.length,
+      itemCount: _filteredEvents.length,
       itemBuilder: (context, index) {
-        final event = _events![index];
+        final event = _filteredEvents[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
           child: SimpleEventCard(
@@ -465,6 +492,7 @@ class _HomeScreenState extends State<HomeScreen> {
             date: DateFormat('E, MMM d, y').format(event.startDate),
             category: event.categoryName,
             isFree: event.isFree,
+            price: event.price,
             onTap: () => _onEventTapped(event),
           ),
         );
@@ -477,43 +505,195 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSavedTab() {
-    // Load and display bookmarked events
+    final authProvider = Provider.of<AuthProvider>(context);
+    final currentUser = authProvider.currentUser;
+
+    if (currentUser == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.bookmark_border,
+                size: 48,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Save Your Favorite Events',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Login to bookmark events and access them anytime',
+                style: Theme.of(context).textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              FilledButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, AppRouter.login);
+                },
+                child: const Text('Login'),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () {
+                  Navigator.pushNamed(context, AppRouter.register);
+                },
+                child: const Text('Create New Account'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (currentUser.userType != 'user') {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.errorContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.lock,
+                size: 64,
+                color: Theme.of(context).colorScheme.error,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Access Restricted',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'This feature is only available for regular users. Please use a regular user account to access bookmarks.',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.7),
+                  ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
     return FutureBuilder<List<EventModel>>(
-      future: _eventRepository.getBookmarkedEvents(),
+      future: _eventService.getBookmarkedEvents(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
+        }
+
+        if (snapshot.hasError) {
           return ErrorStateWidget(
-            message: 'Failed to load bookmarked events',
+            message: 'Failed to load bookmarked events: ${snapshot.error}',
             onRetry: () => setState(() {}),
           );
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+        }
+
+        final bookmarkedEvents = snapshot.data ?? [];
+
+        if (bookmarkedEvents.isEmpty) {
           return const EmptyStateWidget(
-            message: 'No bookmarked events',
+            message: 'No bookmarked events yet',
             icon: Icons.bookmark_border,
           );
         }
 
-        final bookmarkedEvents = snapshot.data!;
-        return ListView.builder(
-          padding: const EdgeInsets.all(AppConstants.defaultPadding),
-          itemCount: bookmarkedEvents.length,
-          itemBuilder: (context, index) {
-            final event = bookmarkedEvents[index];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: SimpleEventCard(
-                title: event.title,
-                imageUrl: event.posterImage,
-                location: event.locationName,
-                date: DateFormat('E, MMM d, y').format(event.startDate),
-                category: event.categoryName,
-                isFree: event.isFree,
-                onTap: () => _onEventTapped(event),
+        return Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
               ),
-            );
-          },
+              child: SafeArea(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.bookmark,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'My Bookmarks',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'You have ${bookmarkedEvents.length} bookmarked events',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(AppConstants.defaultPadding),
+                itemCount: bookmarkedEvents.length,
+                itemBuilder: (context, index) {
+                  final event = bookmarkedEvents[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: SimpleEventCard(
+                      title: event.title,
+                      imageUrl: event.posterImage,
+                      location: event.locationName,
+                      date: DateFormat('E, MMM d, y').format(event.startDate),
+                      category: event.categoryName,
+                      isFree: event.isFree,
+                      onTap: () => _onEventTapped(event),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         );
       },
     );

@@ -1,6 +1,6 @@
 class AppConstants {
   // API
-  static const String baseUrl = 'https://api.eventspot.com';
+  static const String baseUrl = 'http://192.168.1.9:8000/api';
   static const int apiTimeoutSeconds = 30;
 
   // Assets

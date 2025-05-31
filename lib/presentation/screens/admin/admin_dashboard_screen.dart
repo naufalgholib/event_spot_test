@@ -202,10 +202,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const Text(
               'Welcome, Admin',
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -214,6 +215,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             const SizedBox(height: 8),
             Text(
               'Manage your platform effectively',
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey[600],
@@ -231,9 +233,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 1.5,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.3,
       ),
       itemCount: _dashboardStats.length,
       itemBuilder: (context, index) {
@@ -245,24 +247,27 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildStatCard(String title, int count) {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
               title,
+              textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
+                color: Colors.grey,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               count.toString(),
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -277,75 +282,94 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildNavigationSection() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const Text(
           'Platform Management',
+          textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 16),
-        Wrap(
-          spacing: 16,
-          runSpacing: 16,
-          children: [
-            _buildNavigationCard(
-              'User Management',
-              Icons.people,
-              () => Navigator.pushNamed(context, AppRouter.adminUsers),
-            ),
-            _buildNavigationCard(
-              'Event Moderation',
-              Icons.event,
-              () => Navigator.pushNamed(context, AppRouter.adminEvents),
-            ),
-            _buildNavigationCard(
-              'Promoter Verification',
-              Icons.verified_user,
-              () => Navigator.pushNamed(context, AppRouter.adminPromoters),
-            ),
-            _buildNavigationCard(
-              'Category Management',
-              Icons.category,
-              () => Navigator.pushNamed(context, AppRouter.adminCategories),
-            ),
-            _buildNavigationCard(
-              'Tag Management',
-              Icons.tag,
-              () => Navigator.pushNamed(context, AppRouter.adminTags),
-            ),
-            _buildNavigationCard(
-              'Platform Statistics',
-              Icons.bar_chart,
-              () => Navigator.pushNamed(context, AppRouter.adminStatistics),
-            ),
-            _buildNavigationCard(
-              'System Settings',
-              Icons.settings,
-              () => Navigator.pushNamed(context, AppRouter.adminSettings),
-            ),
-          ],
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.2,
+          ),
+          itemCount: 7,
+          itemBuilder: (context, index) {
+            switch (index) {
+              case 0:
+                return _buildNavigationCard(
+                  'User Management',
+                  Icons.people,
+                  () => Navigator.pushNamed(context, AppRouter.adminUsers),
+                );
+              case 1:
+                return _buildNavigationCard(
+                  'Event Moderation',
+                  Icons.event,
+                  () => Navigator.pushNamed(context, AppRouter.adminEvents),
+                );
+              case 2:
+                return _buildNavigationCard(
+                  'Promoter Verification',
+                  Icons.verified_user,
+                  () => Navigator.pushNamed(context, AppRouter.adminPromoters),
+                );
+              case 3:
+                return _buildNavigationCard(
+                  'Category Management',
+                  Icons.category,
+                  () => Navigator.pushNamed(context, AppRouter.adminCategories),
+                );
+              case 4:
+                return _buildNavigationCard(
+                  'Tag Management',
+                  Icons.tag,
+                  () => Navigator.pushNamed(context, AppRouter.adminTags),
+                );
+              case 5:
+                return _buildNavigationCard(
+                  'Platform Statistics',
+                  Icons.bar_chart,
+                  () => Navigator.pushNamed(context, AppRouter.adminStatistics),
+                );
+              case 6:
+                return _buildNavigationCard(
+                  'System Settings',
+                  Icons.settings,
+                  () => Navigator.pushNamed(context, AppRouter.adminSettings),
+                );
+              default:
+                return const SizedBox.shrink();
+            }
+          },
         ),
       ],
     );
   }
 
   Widget _buildNavigationCard(String title, IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Card(
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Container(
-          width: 150,
-          padding: const EdgeInsets.all(16),
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 40, color: AppTheme.primaryColor),
-              const SizedBox(height: 12),
+              Icon(icon, size: 32, color: AppTheme.primaryColor),
+              const SizedBox(height: 8),
               Text(
                 title,
                 textAlign: TextAlign.center,
@@ -387,12 +411,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     ];
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const Text(
           'Recent Activity',
+          textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -409,6 +434,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             itemBuilder: (context, index) {
               final activity = recentActivities[index];
               return ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 leading: CircleAvatar(
                   backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
                   child: Icon(
@@ -416,8 +443,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     color: AppTheme.primaryColor,
                   ),
                 ),
-                title: Text(activity['action']),
-                subtitle: Text(activity['time']),
+                title: Text(
+                  activity['action'],
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 14),
+                ),
+                subtitle: Text(
+                  activity['time'],
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 12),
+                ),
               );
             },
           ),

@@ -67,6 +67,9 @@ dependencies:
   firebase_messaging: ^14.7.16
   fl_chart: ^0.63.0
 
+  # New dependencies
+  share_plus: ^7.2.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -6,6 +6,7 @@ import '../../../data/models/user_model.dart';
 import '../../../data/repositories/mock_event_repository.dart';
 import '../../../core/config/app_router.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../data/services/event_service.dart';
 
 class PromotorDashboardScreen extends StatefulWidget {
   const PromotorDashboardScreen({Key? key}) : super(key: key);
@@ -16,9 +17,10 @@ class PromotorDashboardScreen extends StatefulWidget {
 }
 
 class _PromotorDashboardScreenState extends State<PromotorDashboardScreen> {
-  final MockEventRepository _eventRepository = MockEventRepository();
+  final EventService _eventService = EventService();
   List<EventModel> _promotorEvents = [];
   bool _isLoading = true;
+  String? _error;
 
   // Mock data for earnings
   final Map<String, double> _monthlyEarnings = {
@@ -39,26 +41,20 @@ class _PromotorDashboardScreenState extends State<PromotorDashboardScreen> {
   Future<void> _loadPromotorEvents() async {
     setState(() {
       _isLoading = true;
+      _error = null;
     });
 
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final user = authProvider.currentUser;
-
-      if (user == null || !user.isPromoter) {
-        throw Exception('User not found or not a promoter');
-      }
-
-      final events = await _eventRepository.getEventsByPromoter(user.id);
+      final events = await _eventService.getPromotorEvents();
       setState(() {
         _promotorEvents = events;
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
+        _error = e.toString();
         _isLoading = false;
       });
-      // Show error message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -534,7 +530,20 @@ class _PromotorDashboardScreenState extends State<PromotorDashboardScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        if (upcomingEvents.isEmpty)
+        if (_isLoading)
+          const Center(child: CircularProgressIndicator())
+        else if (_error != null)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Text(
+                'Error: $_error',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
+          )
+        else if (upcomingEvents.isEmpty)
           const Center(
             child: Padding(
               padding: EdgeInsets.all(20.0),
@@ -567,6 +576,17 @@ class _PromotorDashboardScreenState extends State<PromotorDashboardScreen> {
                             width: 50,
                             height: 50,
                             fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 50,
+                                height: 50,
+                                color: Colors.grey[300],
+                                child: const Icon(
+                                  Icons.event,
+                                  color: Colors.grey,
+                                ),
+                              );
+                            },
                           )
                         : Container(
                             width: 50,
@@ -587,7 +607,7 @@ class _PromotorDashboardScreenState extends State<PromotorDashboardScreen> {
                     children: [
                       const SizedBox(height: 4),
                       Text(
-                        _eventRepository.formatDateTime(event.startDate),
+                        '${event.startDate.day}/${event.startDate.month}/${event.startDate.year} ${event.startDate.hour}:${event.startDate.minute.toString().padLeft(2, '0')}',
                         style: TextStyle(color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 4),
@@ -606,7 +626,11 @@ class _PromotorDashboardScreenState extends State<PromotorDashboardScreen> {
                   trailing: IconButton(
                     icon: const Icon(Icons.arrow_forward_ios, size: 16),
                     onPressed: () {
-                      // Navigate to event details/edit page
+                      Navigator.pushNamed(
+                        context,
+                        AppRouter.eventDetail,
+                        arguments: event.id,
+                      );
                     },
                   ),
                 ),

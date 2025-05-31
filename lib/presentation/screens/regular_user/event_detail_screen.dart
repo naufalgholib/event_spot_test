@@ -4,83 +4,71 @@ import 'package:intl/intl.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/config/app_router.dart';
 import '../../../data/models/event_model.dart';
-import '../../../data/repositories/mock_event_repository.dart';
-import '../../../data/repositories/mock_user_repository.dart';
-import '../../../data/repositories/mock_registration_repository.dart';
+import '../../../data/services/event_service.dart';
+import '../../../data/services/bookmark_service.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../widgets/common_widgets.dart';
 
 class EventDetailScreen extends StatefulWidget {
   final int eventId;
   final String? eventSlug;
 
-  const EventDetailScreen({super.key, this.eventId = 0, this.eventSlug})
-      : assert(
-          eventId != 0 || eventSlug != null,
-          'Either eventId or eventSlug must be provided',
-        );
+  const EventDetailScreen({
+    Key? key,
+    this.eventId = 0,
+    this.eventSlug,
+  }) : super(key: key);
 
   @override
   State<EventDetailScreen> createState() => _EventDetailScreenState();
 }
 
 class _EventDetailScreenState extends State<EventDetailScreen> {
-  final MockEventRepository _eventRepository = MockEventRepository();
-  final MockUserRepository _userRepository = MockUserRepository();
-  final MockRegistrationRepository _registrationRepository =
-      MockRegistrationRepository();
+  final EventService _eventService = EventService();
+  final BookmarkService _bookmarkService = BookmarkService();
 
   EventModel? _event;
   bool _isLoading = true;
-  bool _isBookmarking = false;
-  bool _isRegistering = false;
+  bool _isBookmarked = false;
+  bool _isRegistered = false;
   String? _error;
   bool _isLoggedIn = false;
-  bool _isRegistered = false;
   final int _currentImageIndex = 0;
+  Map<String, dynamic>? _attendanceDetails;
+  bool _isRegistering = false;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadEventData();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadEventData() async {
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
     try {
-      // Check if user is logged in
-      final currentUser = await _userRepository.getCurrentUser();
-      _isLoggedIn = currentUser != null;
+      final event = await _eventService.getEventDetail(widget.eventId);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      _isLoggedIn = authProvider.isLoggedIn;
 
-      // Fetch event data
-      EventModel? event;
-      if (widget.eventId != 0) {
-        event = await _eventRepository.getEventById(widget.eventId);
-      } else if (widget.eventSlug != null) {
-        event = await _eventRepository.getEventBySlug(widget.eventSlug!);
-      }
+      if (_isLoggedIn) {
+        _isBookmarked = await _bookmarkService.isEventBookmarked(event.id);
 
-      if (event == null) {
+        // Load attendance details if user is logged in
+        final attendance = await _eventService.getAttendanceDetails(event.id);
         setState(() {
-          _error = 'Event not found';
-          _isLoading = false;
+          _attendanceDetails = attendance;
+          _isRegistered = attendance['status'] == 'registered';
         });
-        return;
-      }
-
-      // Check if user is registered for this event
-      if (_isLoggedIn && currentUser != null) {
-        _isRegistered = await _registrationRepository.isUserRegistered(
-          event.id,
-          currentUser.id,
-        );
       }
 
       if (mounted) {
@@ -92,7 +80,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Failed to load event details. Please try again.';
+          _error = e.toString();
           _isLoading = false;
         });
       }
@@ -100,40 +88,41 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   Future<void> _toggleBookmark() async {
-    if (_event == null || _isBookmarking) return;
-
-    setState(() {
-      _isBookmarking = true;
-    });
+    if (!_isLoggedIn) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please login as a regular user to bookmark events'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
 
     try {
-      final updatedEvent = await _eventRepository.toggleBookmark(_event!.id);
+      final isBookmarked = await _bookmarkService.toggleBookmark(_event!.id);
       if (mounted) {
         setState(() {
-          _event = updatedEvent;
-          _isBookmarking = false;
+          _isBookmarked = isBookmarked;
         });
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _event!.isBookmarked
+              isBookmarked
                   ? 'Event bookmarked'
                   : 'Event removed from bookmarks',
             ),
-            duration: const Duration(seconds: 2),
+            backgroundColor: Colors.green,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isBookmarking = false;
-        });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to update bookmark'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text('Failed to update bookmark: ${e.toString()}'),
+            backgroundColor: Colors.red,
           ),
         );
       }
@@ -141,81 +130,95 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   Future<void> _registerForEvent() async {
-    if (_event == null || _isRegistering) return;
-
-    // If user is not logged in, prompt them to login
-    if (!_isLoggedIn) {
-      final result = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Login Required'),
-          content: const Text(
-            'You need to be logged in to register for this event',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Login'),
-            ),
-          ],
-        ),
-      );
-
-      if (result == true) {
-        if (mounted) {
-          Navigator.pushNamed(context, AppRouter.login);
-        }
-      }
-      return;
-    }
+    if (_event == null) return;
 
     setState(() {
       _isRegistering = true;
     });
 
     try {
-      final currentUser = await _userRepository.getCurrentUser();
-      if (currentUser == null) throw Exception('User not found');
+      final registrationData = await _eventService.registerForEvent(_event!.id);
 
-      // Create registration
-      final registration = await _registrationRepository.registerForEvent(
-        _event!.id,
-        currentUser.id,
-        amount: _event!.isFree ? null : _event!.price,
-      );
+      // Reload attendance details
+      final attendance = await _eventService.getAttendanceDetails(_event!.id);
 
       if (mounted) {
         setState(() {
-          _isRegistering = false;
+          _attendanceDetails = attendance;
           _isRegistered = true;
+          _isRegistering = false;
         });
 
-        // If it's a paid event, navigate to payment screen
-        if (!_event!.isFree) {
-          Navigator.pushNamed(
-            context,
-            AppRouter.payment,
-            arguments: {'event': _event, 'registration': registration},
-          );
-        } else {
-          // For free events, show confirmation directly
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Registration Successful'),
-              content: const Text(
-                'You have successfully registered for this event.',
-              ),
-              actions: [
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('OK'),
-                ),
-              ],
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Successfully registered for event'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isRegistering = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _cancelRegistration() async {
+    if (_event == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancel Registration'),
+        content: const Text(
+            'Are you sure you want to cancel your registration? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Yes, Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _isRegistering = true;
+    });
+
+    try {
+      final success = await _eventService.cancelEventRegistration(_event!.id);
+
+      if (success) {
+        // Reload attendance details
+        final attendance = await _eventService.getAttendanceDetails(_event!.id);
+
+        if (mounted) {
+          setState(() {
+            _attendanceDetails = attendance;
+            _isRegistered = false;
+            _isRegistering = false;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Registration cancelled successfully'),
+              backgroundColor: Colors.green,
             ),
           );
         }
@@ -225,11 +228,21 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         setState(() {
           _isRegistering = false;
         });
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to register for event')),
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
+  }
+
+  void _shareEvent() {
+    if (_event == null) return;
+    Share.share(
+        'Check out this event: ${_event!.title}\n${_event!.description}\nDate: ${DateFormat('EEEE, MMMM d, y').format(_event!.startDate)}');
   }
 
   Future<void> _launchMap() async {
@@ -259,8 +272,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? ErrorStateWidget(message: _error!, onRetry: _loadData)
-              : _buildEventDetail(),
+              ? ErrorStateWidget(message: _error!, onRetry: _loadEventData)
+              : _event == null
+                  ? const EmptyStateWidget(
+                      message: 'Event not found',
+                      icon: Icons.event_busy,
+                    )
+                  : _buildEventDetail(),
       bottomNavigationBar: _event != null ? _buildBottomBar() : null,
     );
   }
@@ -346,16 +364,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           actions: [
             IconButton(
               icon: Icon(
-                _event!.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
                 color: Colors.white,
               ),
               onPressed: _toggleBookmark,
             ),
             IconButton(
               icon: const Icon(Icons.share, color: Colors.white),
-              onPressed: () {
-                // TODO: Implement share functionality
-              },
+              onPressed: _shareEvent,
             ),
           ],
         ),
@@ -470,7 +486,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   'Price',
                   _event!.isFree
                       ? 'Free'
-                      : '\$${_event!.price?.toStringAsFixed(2)}',
+                      : _event!.price != null
+                          ? '\$${_event!.price!.toStringAsFixed(2)}'
+                          : 'Free',
                 ),
 
                 const SizedBox(height: 8),
@@ -633,6 +651,64 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   ),
                 ],
 
+                const SizedBox(height: 24),
+
+                // Registration status section
+                const Text(
+                  'Registration Status',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(
+                        _attendanceDetails?['status'] ?? 'not_registered'),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _getStatusText(
+                        _attendanceDetails?['status'] ?? 'not_registered'),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                if (_attendanceDetails?['ticket_code'] != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Ticket Code: ${_attendanceDetails?['ticket_code']}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+                if (_attendanceDetails?['registration_date'] != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Registration Date: ${_formatDateTime(_attendanceDetails?['registration_date'])}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+                if (_attendanceDetails?['check_in_time'] != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Check-in Time: ${_formatDateTime(_attendanceDetails?['check_in_time'])}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+
                 const SizedBox(height: 32),
               ],
             ),
@@ -708,6 +784,16 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     return '$startDate - $endDate';
   }
 
+  String _formatDateTime(String? dateStr) {
+    if (dateStr == null) return '';
+    try {
+      final date = DateTime.parse(dateStr);
+      return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute}';
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
   Widget _buildBottomBar() {
     return Container(
       padding: const EdgeInsets.all(16.0),
@@ -727,7 +813,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             // Bookmark button
             IconButton(
               icon: Icon(
-                _event!.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
               ),
               onPressed: _toggleBookmark,
             ),
@@ -736,21 +822,53 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             Expanded(
               child: AppButton(
                 text: _isRegistered
-                    ? 'Registered'
+                    ? 'Cancel'
                     : _event!.isFree
                         ? 'Register Now'
-                        : 'Pay ${NumberFormat.currency(symbol: '\$').format(_event!.price)}',
-                onPressed: _isRegistered
-                    ? (() {})
-                    : (() {
-                        _registerForEvent();
-                      }),
-                isLoading: _isRegistering,
+                        : _event!.price != null
+                            ? 'Pay ${NumberFormat.currency(symbol: '\$').format(_event!.price)}'
+                            : 'Register Now',
+                onPressed:
+                    _isRegistered ? _cancelRegistration : _registerForEvent,
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'registered':
+        return Colors.green;
+      case 'attended':
+        return Colors.blue;
+      case 'cancelled':
+        return Colors.red;
+      case 'pending_payment':
+        return Colors.orange;
+      case 'not_registered':
+        return Colors.grey;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _getStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'registered':
+        return 'Registered';
+      case 'attended':
+        return 'Attended';
+      case 'cancelled':
+        return 'Cancelled';
+      case 'pending_payment':
+        return 'Pending Payment';
+      case 'not_registered':
+        return 'Not Registered';
+      default:
+        return status;
+    }
   }
 }
