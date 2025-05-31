@@ -12,10 +12,8 @@ import '../../../core/config/app_router.dart';
 import '../../../data/models/event_model.dart';
 import '../../../data/services/event_service.dart';
 import '../../../data/services/bookmark_service.dart';
-import '../../../data/services/user_service.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../widgets/common_widgets.dart';
-import '../../widgets/event_card.dart';
 
 class EventDetailScreen extends StatefulWidget {
   final int eventId;
@@ -34,7 +32,6 @@ class EventDetailScreen extends StatefulWidget {
 class _EventDetailScreenState extends State<EventDetailScreen> {
   final EventService _eventService = EventService();
   final BookmarkService _bookmarkService = BookmarkService();
-  final UserService _userService = UserService();
 
   EventModel? _event;
   bool _isLoading = true;
