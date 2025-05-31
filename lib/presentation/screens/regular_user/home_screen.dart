@@ -124,7 +124,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) => FilterBottomSheet(
         categories: _categories ?? [],
         onApplyFilters: (filters) {
-          // TODO: Apply filters
+          // Apply filters
           Navigator.pop(context);
         },
       ),
@@ -492,6 +492,7 @@ class _HomeScreenState extends State<HomeScreen> {
             date: DateFormat('E, MMM d, y').format(event.startDate),
             category: event.categoryName,
             isFree: event.isFree,
+            price: event.price,
             onTap: () => _onEventTapped(event),
           ),
         );

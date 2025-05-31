@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/config/app_constants.dart';
 import '../../data/models/event_model.dart';
 import '../../data/services/event_service.dart';
@@ -216,7 +218,9 @@ class EventCard extends StatelessWidget {
                       Text(
                         event.isFree
                             ? 'Free'
-                            : '\$${event.price?.toStringAsFixed(2) ?? '0.00'}',
+                            : event.price != null
+                                ? '\$${event.price!.toStringAsFixed(2)}'
+                                : 'Price not set',
                         style: TextStyle(
                           color:
                               event.isFree ? Colors.green : colorScheme.primary,
