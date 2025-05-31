@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:event_spot/data/models/event_model.dart';
 import 'package:event_spot/data/repositories/mock_event_repository.dart';
+import '../../../core/theme/app_theme.dart';
 
 class EventModerationScreen extends StatefulWidget {
   const EventModerationScreen({Key? key}) : super(key: key);
@@ -89,8 +90,14 @@ class _EventModerationScreenState extends State<EventModerationScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Event Moderation'),
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
+        elevation: 2,
         bottom: TabBar(
           controller: _tabController,
+          indicatorColor: Colors.white,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
           tabs: const [
             Tab(text: 'Reported'),
             Tab(text: 'Featured'),
@@ -111,6 +118,87 @@ class _EventModerationScreenState extends State<EventModerationScreen>
     );
   }
 
+  Widget _buildEventListItem(EventModel event) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: event.posterImage != null
+                ? Image.network(
+                    event.posterImage!,
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.cover,
+                  )
+                : Container(
+                    width: 100,
+                    height: 100,
+                    color: Colors.grey[300],
+                    child:
+                        const Icon(Icons.image, color: Colors.grey, size: 32),
+                  ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  event.title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        event.locationName,
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_today,
+                        size: 16, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${_formatDate(event.startDate)} - ${_formatDate(event.endDate)}',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(Icons.person, size: 16, color: Colors.grey),
+                    const SizedBox(width: 4),
+                    Text(
+                      'By: ${event.promotorId}',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildReportedEventsTab() {
     if (_reportedEvents.isEmpty) {
       return const Center(
@@ -123,7 +211,6 @@ class _EventModerationScreenState extends State<EventModerationScreen>
       padding: const EdgeInsets.all(16),
       itemBuilder: (context, index) {
         final event = _reportedEvents[index];
-        // Find the report data for this event
         final report = _reportData.firstWhere(
           (r) => r['eventId'] == event.id,
           orElse: () => {'reason': 'Unknown', 'details': 'No details provided'},
@@ -131,6 +218,7 @@ class _EventModerationScreenState extends State<EventModerationScreen>
 
         return Card(
           margin: const EdgeInsets.only(bottom: 16),
+          elevation: 2,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Column(
@@ -147,31 +235,41 @@ class _EventModerationScreenState extends State<EventModerationScreen>
                         const Icon(Icons.report_problem,
                             color: Colors.red, size: 20),
                         const SizedBox(width: 8),
-                        Text(
-                          'Reported for: ${report['reason']}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.red,
+                        Expanded(
+                          child: Text(
+                            'Reported for: ${report['reason']}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
                           ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Details: ${report['details']}',
+                      style: const TextStyle(fontSize: 14),
+                    ),
                     const SizedBox(height: 8),
-                    Text('Details: ${report['details']}'),
-                    const SizedBox(height: 4),
                     Text(
                       'Reported by: ${report['reporterName']} - ${_formatDateTime(report['timestamp'])}',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 13,
                         color: Colors.grey[600],
                       ),
                     ),
                     const SizedBox(height: 16),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         OutlinedButton(
                           onPressed: () => _dismissReport(event, report),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            side: const BorderSide(color: Colors.grey),
+                          ),
                           child: const Text('Dismiss Report'),
                         ),
                         const SizedBox(width: 12),
@@ -179,6 +277,8 @@ class _EventModerationScreenState extends State<EventModerationScreen>
                           onPressed: () => _showRemoveEventDialog(event),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
                           ),
                           child: const Text('Remove Event'),
                         ),
@@ -208,6 +308,7 @@ class _EventModerationScreenState extends State<EventModerationScreen>
         final event = _featuredEvents[index];
         return Card(
           margin: const EdgeInsets.only(bottom: 16),
+          elevation: 2,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Column(
@@ -236,6 +337,8 @@ class _EventModerationScreenState extends State<EventModerationScreen>
                       onPressed: () => _unfeatureEvent(event),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.amber[700],
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
                       ),
                       child: const Text('Remove from Featured'),
                     ),
@@ -261,7 +364,7 @@ class _EventModerationScreenState extends State<EventModerationScreen>
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              contentPadding: EdgeInsets.zero,
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
             ),
             onChanged: (value) {
               // Implement search functionality
@@ -276,6 +379,7 @@ class _EventModerationScreenState extends State<EventModerationScreen>
               final event = _allEvents[index];
               return Card(
                 margin: const EdgeInsets.only(bottom: 16),
+                elevation: 2,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
                 child: Column(
@@ -283,7 +387,7 @@ class _EventModerationScreenState extends State<EventModerationScreen>
                     _buildEventListItem(event),
                     const Divider(height: 1),
                     Padding(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(16),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
@@ -293,6 +397,8 @@ class _EventModerationScreenState extends State<EventModerationScreen>
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: Colors.amber[700],
                                 side: BorderSide(color: Colors.amber[700]!),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
                               ),
                               child: const Text('Feature'),
                             )
@@ -302,6 +408,8 @@ class _EventModerationScreenState extends State<EventModerationScreen>
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: Colors.grey,
                                 side: const BorderSide(color: Colors.grey),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
                               ),
                               child: const Text('Unfeature'),
                             ),
@@ -310,6 +418,8 @@ class _EventModerationScreenState extends State<EventModerationScreen>
                             onPressed: () => _showRemoveEventDialog(event),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.red,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
                             ),
                             child: const Text('Remove'),
                           ),
@@ -323,86 +433,6 @@ class _EventModerationScreenState extends State<EventModerationScreen>
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildEventListItem(EventModel event) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: event.posterImage != null
-                ? Image.network(
-                    event.posterImage!,
-                    width: 80,
-                    height: 80,
-                    fit: BoxFit.cover,
-                  )
-                : Container(
-                    width: 80,
-                    height: 80,
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.image, color: Colors.grey),
-                  ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  event.title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on, size: 14, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        event.locationName,
-                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.calendar_today,
-                        size: 14, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${_formatDate(event.startDate)} - ${_formatDate(event.endDate)}',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.person, size: 14, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Text(
-                      'By: ${event.promotorId}', // In a real app, we would show the promoter name
-                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 
