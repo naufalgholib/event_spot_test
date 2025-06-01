@@ -385,4 +385,14 @@ class MockUserRepository {
 
     return false;
   }
+
+  Future<Map<String, dynamic>> getUserStats() async {
+    // Mock implementation
+    return {
+      'totalEventsAttended': 12,
+      'totalBookmarks': 8,
+      'totalFollowing': 3,
+      'totalCategoriesSubscribed': 5,
+    };
+  }
 }
