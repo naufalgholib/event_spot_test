@@ -313,7 +313,7 @@ class SimpleEventCard extends StatelessWidget {
                             isFree!
                                 ? 'Free'
                                 : price != null
-                                    ? '\$${price!.toStringAsFixed(2)}'
+                                    ? 'Rp.${price!.toStringAsFixed(3)}'
                                     : 'Free',
                             style: TextStyle(
                               color: Colors.green,

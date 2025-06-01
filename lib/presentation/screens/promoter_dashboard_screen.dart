@@ -98,27 +98,26 @@ class _PromoterDashboardScreenState extends State<PromoterDashboardScreen> {
         },
         child: const Icon(Icons.add),
       ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
               ? ErrorStateWidget(message: _error!, onRetry: _loadDashboardData)
               : RefreshIndicator(
-                onRefresh: _loadDashboardData,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppConstants.defaultPadding),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildStatsSection(),
-                      const SizedBox(height: 24),
-                      _buildUpcomingEventsSection(),
-                      const SizedBox(height: 24),
-                      _buildPastEventsSection(),
-                    ],
+                  onRefresh: _loadDashboardData,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(AppConstants.defaultPadding),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildStatsSection(),
+                        const SizedBox(height: 24),
+                        _buildUpcomingEventsSection(),
+                        const SizedBox(height: 24),
+                        _buildPastEventsSection(),
+                      ],
+                    ),
                   ),
                 ),
-              ),
     );
   }
 
@@ -146,7 +145,7 @@ class _PromoterDashboardScreenState extends State<PromoterDashboardScreen> {
         Expanded(
           child: StatCard(
             title: 'Total Earnings',
-            value: '\$${_totalEarnings.toStringAsFixed(2)}',
+            value: 'Rp.${_totalEarnings.toStringAsFixed(3)}',
             icon: Icons.attach_money,
             color: Colors.green,
           ),

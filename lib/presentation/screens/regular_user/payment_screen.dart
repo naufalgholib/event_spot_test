@@ -149,7 +149,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     _summaryRow(
                       'Amount',
                       NumberFormat.currency(
-                        symbol: '\$',
+                        symbol: 'Rp.',
                       ).format(widget.event.price),
                     ),
                   ],
@@ -257,7 +257,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
               child: AppButton(
                 text: _isProcessing
                     ? 'Processing...'
-                    : 'Pay ${NumberFormat.currency(symbol: '\$').format(widget.event.price)}',
+                    : 'Pay ${NumberFormat.currency(symbol: 'Rp.').format(widget.event.price)}',
                 onPressed: _isProcessing
                     ? (() {})
                     : (() {

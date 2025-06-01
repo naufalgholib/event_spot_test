@@ -487,7 +487,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   _event!.isFree
                       ? 'Free'
                       : _event!.price != null
-                          ? '\$${_event!.price!.toStringAsFixed(2)}'
+                          ? 'Rp.${_event!.price!.toStringAsFixed(3)}'
                           : 'Free',
                 ),
 
@@ -826,7 +826,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     : _event!.isFree
                         ? 'Register Now'
                         : _event!.price != null
-                            ? 'Pay ${NumberFormat.currency(symbol: '\$').format(_event!.price)}'
+                            ? 'Pay ${NumberFormat.currency(symbol: 'Rp.').format(_event!.price)}'
                             : 'Register Now',
                 onPressed:
                     _isRegistered ? _cancelRegistration : _registerForEvent,

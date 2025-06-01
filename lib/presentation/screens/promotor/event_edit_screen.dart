@@ -662,7 +662,7 @@ class _EventEditScreenState extends State<EventEditScreen> {
             decoration: const InputDecoration(
               labelText: 'Ticket Price *',
               hintText: 'Enter amount',
-              prefixText: '\$ ',
+              prefixText: 'Rp. ',
             ),
             keyboardType: TextInputType.number,
             validator: (value) {

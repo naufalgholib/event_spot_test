@@ -169,220 +169,217 @@ class _EventCreationScreenState extends State<EventCreationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Create Event')),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                padding: const EdgeInsets.all(AppConstants.defaultPadding),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (_error != null)
-                        ErrorStateWidget(
-                          message: _error!,
-                          onRetry: _createEvent,
-                        ),
-                      TextFormField(
-                        controller: _titleController,
-                        decoration: const InputDecoration(
-                          labelText: 'Event Title',
-                          hintText: 'Enter event title',
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter a title';
-                          }
-                          return null;
-                        },
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(AppConstants.defaultPadding),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_error != null)
+                      ErrorStateWidget(
+                        message: _error!,
+                        onRetry: _createEvent,
                       ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _descriptionController,
-                        decoration: const InputDecoration(
-                          labelText: 'Description',
-                          hintText: 'Enter event description',
-                        ),
-                        maxLines: 3,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter a description';
-                          }
-                          return null;
-                        },
+                    TextFormField(
+                      controller: _titleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Event Title',
+                        hintText: 'Enter event title',
                       ),
-                      const SizedBox(height: 16),
-                      DropdownButtonFormField<int>(
-                        value: _selectedCategoryId,
-                        decoration: const InputDecoration(
-                          labelText: 'Category',
-                        ),
-                        items:
-                            _categories.map((category) {
-                              return DropdownMenuItem<int>(
-                                value: category.id,
-                                child: Text(category.name),
-                              );
-                            }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedCategoryId = value;
-                          });
-                        },
-                        validator: (value) {
-                          if (value == null) {
-                            return 'Please select a category';
-                          }
-                          return null;
-                        },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a title';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _descriptionController,
+                      decoration: const InputDecoration(
+                        labelText: 'Description',
+                        hintText: 'Enter event description',
                       ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _locationController,
-                        decoration: const InputDecoration(
-                          labelText: 'Location Name',
-                          hintText: 'Enter venue name',
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter a location';
-                          }
-                          return null;
-                        },
+                      maxLines: 3,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a description';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<int>(
+                      value: _selectedCategoryId,
+                      decoration: const InputDecoration(
+                        labelText: 'Category',
                       ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _addressController,
-                        decoration: const InputDecoration(
-                          labelText: 'Address',
-                          hintText: 'Enter full address',
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter an address';
-                          }
-                          return null;
-                        },
+                      items: _categories.map((category) {
+                        return DropdownMenuItem<int>(
+                          value: category.id,
+                          child: Text(category.name),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedCategoryId = value;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null) {
+                          return 'Please select a category';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _locationController,
+                      decoration: const InputDecoration(
+                        labelText: 'Location Name',
+                        hintText: 'Enter venue name',
                       ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ListTile(
-                              title: const Text('Start Date'),
-                              subtitle: Text(
-                                _startDate != null
-                                    ? DateFormat('MMM d, y').format(_startDate!)
-                                    : 'Select date',
-                              ),
-                              onTap: () => _selectDate(context, true),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a location';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _addressController,
+                      decoration: const InputDecoration(
+                        labelText: 'Address',
+                        hintText: 'Enter full address',
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter an address';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ListTile(
+                            title: const Text('Start Date'),
+                            subtitle: Text(
+                              _startDate != null
+                                  ? DateFormat('MMM d, y').format(_startDate!)
+                                  : 'Select date',
                             ),
+                            onTap: () => _selectDate(context, true),
                           ),
-                          Expanded(
-                            child: ListTile(
-                              title: const Text('End Date'),
-                              subtitle: Text(
-                                _endDate != null
-                                    ? DateFormat('MMM d, y').format(_endDate!)
-                                    : 'Select date',
-                              ),
-                              onTap: () => _selectDate(context, false),
+                        ),
+                        Expanded(
+                          child: ListTile(
+                            title: const Text('End Date'),
+                            subtitle: Text(
+                              _endDate != null
+                                  ? DateFormat('MMM d, y').format(_endDate!)
+                                  : 'Select date',
                             ),
+                            onTap: () => _selectDate(context, false),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ListTile(
-                              title: const Text('Registration Start'),
-                              subtitle: Text(
-                                _registrationStart != null
-                                    ? DateFormat(
-                                      'MMM d, y',
-                                    ).format(_registrationStart!)
-                                    : 'Select date',
-                              ),
-                              onTap:
-                                  () => _selectRegistrationDate(context, true),
-                            ),
-                          ),
-                          Expanded(
-                            child: ListTile(
-                              title: const Text('Registration End'),
-                              subtitle: Text(
-                                _registrationEnd != null
-                                    ? DateFormat(
-                                      'MMM d, y',
-                                    ).format(_registrationEnd!)
-                                    : 'Select date',
-                              ),
-                              onTap:
-                                  () => _selectRegistrationDate(context, false),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      SwitchListTile(
-                        title: const Text('Free Event'),
-                        value: _isFree,
-                        onChanged: (value) {
-                          setState(() {
-                            _isFree = value;
-                          });
-                        },
-                      ),
-                      if (!_isFree) ...[
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _priceController,
-                          decoration: const InputDecoration(
-                            labelText: 'Price',
-                            hintText: 'Enter ticket price',
-                            prefixText: '\$',
-                          ),
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter a price';
-                            }
-                            if (double.tryParse(value) == null) {
-                              return 'Please enter a valid price';
-                            }
-                            return null;
-                          },
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ListTile(
+                            title: const Text('Registration Start'),
+                            subtitle: Text(
+                              _registrationStart != null
+                                  ? DateFormat(
+                                      'MMM d, y',
+                                    ).format(_registrationStart!)
+                                  : 'Select date',
+                            ),
+                            onTap: () => _selectRegistrationDate(context, true),
+                          ),
+                        ),
+                        Expanded(
+                          child: ListTile(
+                            title: const Text('Registration End'),
+                            subtitle: Text(
+                              _registrationEnd != null
+                                  ? DateFormat(
+                                      'MMM d, y',
+                                    ).format(_registrationEnd!)
+                                  : 'Select date',
+                            ),
+                            onTap: () =>
+                                _selectRegistrationDate(context, false),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    SwitchListTile(
+                      title: const Text('Free Event'),
+                      value: _isFree,
+                      onChanged: (value) {
+                        setState(() {
+                          _isFree = value;
+                        });
+                      },
+                    ),
+                    if (!_isFree) ...[
                       const SizedBox(height: 16),
                       TextFormField(
-                        controller: _maxAttendeesController,
+                        controller: _priceController,
                         decoration: const InputDecoration(
-                          labelText: 'Maximum Attendees',
-                          hintText: 'Enter maximum number of attendees',
+                          labelText: 'Price',
+                          hintText: 'Enter ticket price',
+                          prefixText: 'Rp.',
                         ),
                         keyboardType: TextInputType.number,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter maximum attendees';
+                            return 'Please enter a price';
                           }
-                          if (int.tryParse(value) == null) {
-                            return 'Please enter a valid number';
+                          if (double.tryParse(value) == null) {
+                            return 'Please enter a valid price';
                           }
                           return null;
                         },
                       ),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: _createEvent,
-                        child: const Text('Create Event'),
-                      ),
                     ],
-                  ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _maxAttendeesController,
+                      decoration: const InputDecoration(
+                        labelText: 'Maximum Attendees',
+                        hintText: 'Enter maximum number of attendees',
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter maximum attendees';
+                        }
+                        if (int.tryParse(value) == null) {
+                          return 'Please enter a valid number';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: _createEvent,
+                      child: const Text('Create Event'),
+                    ),
+                  ],
                 ),
               ),
+            ),
     );
   }
 }

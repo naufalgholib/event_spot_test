@@ -813,7 +813,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             min: 0,
             max: 500,
             divisions: 10,
-            label: '\$${_priceRange.round()}',
+            label: 'Rp.${_priceRange.round()}',
             onChanged: !_freeEventsOnly
                 ? (value) {
                     setState(() {

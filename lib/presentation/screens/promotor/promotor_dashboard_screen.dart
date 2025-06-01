@@ -450,7 +450,7 @@ class _PromotorDashboardScreenState extends State<PromotorDashboardScreen> {
                     ),
                   ),
                   Text(
-                    '\$${_monthlyEarnings.values.fold(0.0, (sum, value) => sum + value).toStringAsFixed(2)}',
+                    '\$${_monthlyEarnings.values.fold(0.0, (sum, value) => sum + value).toStringAsFixed(3)}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 18,

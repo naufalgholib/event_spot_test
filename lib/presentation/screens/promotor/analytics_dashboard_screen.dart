@@ -205,7 +205,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
         ),
         _buildInfoCard(
           title: 'Ticket Sales',
-          value: '\$${_analyticsData['ticketSales']}',
+          value: 'Rp.${_analyticsData['ticketSales']}',
           icon: Icons.attach_money,
           color: Colors.amber,
         ),
