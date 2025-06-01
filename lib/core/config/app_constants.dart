@@ -1,6 +1,6 @@
 class AppConstants {
   // API
-  static const String baseUrl = 'http://eventspot.naufalg.online:8000/api';
+  static const String baseUrl = 'http://127.0.0.1:8000/api';
   static const int apiTimeoutSeconds = 30;
 
   // Assets

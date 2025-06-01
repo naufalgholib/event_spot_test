@@ -219,7 +219,7 @@ class EventCard extends StatelessWidget {
                         event.isFree
                             ? 'Free'
                             : event.price != null
-                                ? 'Rp. ${event.price!.toStringAsFixed(2)}'
+                                ? 'Rp.${event.price!.toStringAsFixed(2)}'
                                 : 'Free',
                         style: TextStyle(
                           color:
