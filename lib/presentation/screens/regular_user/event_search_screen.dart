@@ -96,12 +96,12 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
 
     // Filter by search query
     if (_searchController.text.isNotEmpty) {
-      final query = _searchController.text.toLowerCase();
+      final lowercaseQuery = _searchController.text.toLowerCase();
       filtered = filtered.where((event) {
-        return event.title.toLowerCase().contains(query) ||
-            event.description.toLowerCase().contains(query) ||
-            event.locationName.toLowerCase().contains(query) ||
-            event.categoryName.toLowerCase().contains(query);
+        return event.title.toLowerCase().contains(lowercaseQuery) ||
+            event.description.toLowerCase().contains(lowercaseQuery) ||
+            event.locationName.toLowerCase().contains(lowercaseQuery) ||
+            event.categoryName.toLowerCase().contains(lowercaseQuery);
       }).toList();
     }
 
@@ -115,43 +115,88 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
     // Filter by date range
     if (_selectedDateRange != 'all') {
       final now = DateTime.now();
-      filtered = filtered.where((event) {
-        switch (_selectedDateRange) {
-          case 'today':
-            return event.startDate.year == now.year &&
-                event.startDate.month == now.month &&
-                event.startDate.day == now.day;
-          case 'this_week':
-            final weekStart = now.subtract(Duration(days: now.weekday - 1));
-            final weekEnd = weekStart.add(const Duration(days: 7));
-            return event.startDate.isAfter(weekStart) &&
-                event.startDate.isBefore(weekEnd);
-          case 'this_month':
-            return event.startDate.year == now.year &&
-                event.startDate.month == now.month;
-          default:
-            return true;
-        }
-      }).toList();
+      switch (_selectedDateRange) {
+        case 'today':
+          filtered = filtered.where((event) {
+            final eventDate = event.startDate;
+            return eventDate.year == now.year &&
+                eventDate.month == now.month &&
+                eventDate.day == now.day;
+          }).toList();
+          break;
+        case 'tomorrow':
+          final tomorrow = now.add(const Duration(days: 1));
+          filtered = filtered.where((event) {
+            final eventDate = event.startDate;
+            return eventDate.year == tomorrow.year &&
+                eventDate.month == tomorrow.month &&
+                eventDate.day == tomorrow.day;
+          }).toList();
+          break;
+        case 'this_week':
+          final weekStart = now.subtract(Duration(days: now.weekday - 1));
+          final weekEnd = weekStart.add(const Duration(days: 7));
+          filtered = filtered.where((event) {
+            final eventDate = event.startDate;
+            return eventDate.isAfter(weekStart) && eventDate.isBefore(weekEnd);
+          }).toList();
+          break;
+        case 'this_month':
+          filtered = filtered.where((event) {
+            final eventDate = event.startDate;
+            return eventDate.year == now.year && eventDate.month == now.month;
+          }).toList();
+          break;
+      }
     }
 
     // Filter by price range
     if (_selectedPriceRange != 'all') {
-      filtered = filtered.where((event) {
-        switch (_selectedPriceRange) {
-          case 'free':
-            return event.isFree;
-          case 'paid':
-            return !event.isFree;
-          default:
-            return true;
-        }
-      }).toList();
+      switch (_selectedPriceRange) {
+        case 'free':
+          filtered = filtered
+              .where((event) =>
+                  event.isFree == true ||
+                  (event.price != null && event.price == 0))
+              .toList();
+          break;
+        case 'paid':
+          filtered = filtered
+              .where((event) =>
+                  event.isFree == false &&
+                  event.price != null &&
+                  event.price! > 0)
+              .toList();
+          break;
+        case 'under_50':
+          filtered = filtered
+              .where((event) =>
+                  !event.isFree &&
+                  event.price != null &&
+                  event.price! > 0 &&
+                  event.price! <= 50)
+              .toList();
+          break;
+        case 'under_100':
+          filtered = filtered
+              .where((event) =>
+                  !event.isFree &&
+                  event.price != null &&
+                  event.price! > 0 &&
+                  event.price! <= 100)
+              .toList();
+          break;
+      }
     }
 
     // Filter by availability
     if (_onlyAvailable) {
-      filtered = filtered.where((event) => !event.isFullCapacity).toList();
+      filtered = filtered
+          .where((event) =>
+              event.totalAttendees != null &&
+              event.maxAttendees != null &&
+              event.totalAttendees! < event.maxAttendees!)
+          .toList();
     }
 
     // Sort events
@@ -208,9 +253,8 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
                     ? IconButton(
                         icon: const Icon(Icons.clear),
                         onPressed: () {
-                          _searchController.clear();
                           setState(() {
-                            _searchController.text = '';
+                            _searchController.clear();
                           });
                           _filterEvents();
                         },
@@ -232,9 +276,6 @@ class _EventSearchScreenState extends State<EventSearchScreen> {
                 ),
               ),
               onChanged: (value) {
-                setState(() {
-                  _searchController.text = value;
-                });
                 _filterEvents();
               },
             ),
