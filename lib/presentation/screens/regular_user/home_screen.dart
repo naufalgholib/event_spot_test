@@ -32,6 +32,12 @@ class _HomeScreenState extends State<HomeScreen> {
   List<CategoryModel>? _categories;
   bool _isLoading = true;
   String? _error;
+  int? _selectedCategoryId;
+  String? _selectedFilterCategory;
+  double _priceRange = 100;
+  bool _freeEventsOnly = false;
+  DateTime? _startDate;
+  DateTime? _endDate;
 
   @override
   void initState() {
@@ -74,7 +80,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _filterEvents(String query) {
-    if (query.isEmpty) {
+    if (query.isEmpty &&
+        _selectedCategoryId == null &&
+        _selectedFilterCategory == null &&
+        !_freeEventsOnly) {
       setState(() {
         _filteredEvents = _events;
       });
@@ -83,10 +92,30 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final lowercaseQuery = query.toLowerCase();
     final filtered = _events.where((event) {
-      return event.title.toLowerCase().contains(lowercaseQuery) ||
+      // Filter by search query
+      final matchesQuery = query.isEmpty ||
+          event.title.toLowerCase().contains(lowercaseQuery) ||
           event.description.toLowerCase().contains(lowercaseQuery) ||
           event.locationName.toLowerCase().contains(lowercaseQuery) ||
           event.categoryName.toLowerCase().contains(lowercaseQuery);
+
+      // Filter by category (from category chips)
+      final matchesCategory = _selectedCategoryId == null ||
+          event.categoryId == _selectedCategoryId;
+
+      // Filter by category (from filter bottom sheet)
+      final matchesFilterCategory = _selectedFilterCategory == null ||
+          event.categoryName == _selectedFilterCategory;
+
+      // Filter by price
+      final matchesPrice = !_freeEventsOnly ||
+          (event.isFree ||
+              (event.price != null && event.price! <= _priceRange));
+
+      return matchesQuery &&
+          matchesCategory &&
+          matchesFilterCategory &&
+          matchesPrice;
     }).toList();
 
     setState(() {
@@ -94,14 +123,15 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _onCategorySelected(int? categoryId) {
+    setState(() {
+      _selectedCategoryId = categoryId;
+    });
+    _filterEvents(_searchController.text);
+  }
+
   void _onSearch(String query) {
-    if (query.isEmpty) {
-      setState(() {
-        _filteredEvents = _events;
-      });
-    } else {
-      _filterEvents(query);
-    }
+    _filterEvents(query);
   }
 
   void _onBottomNavTapped(int index) {
@@ -124,11 +154,30 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) => FilterBottomSheet(
         categories: _categories ?? [],
         onApplyFilters: (filters) {
-          // Apply filters
+          setState(() {
+            _selectedFilterCategory = filters['category'] as String?;
+            _priceRange = filters['priceRange'] as double;
+            _freeEventsOnly = filters['freeEventsOnly'] as bool;
+            _startDate = filters['startDate'] as DateTime?;
+            _endDate = filters['endDate'] as DateTime?;
+          });
+          _filterEvents(_searchController.text);
           Navigator.pop(context);
         },
       ),
     );
+  }
+
+  void _resetFilters() {
+    setState(() {
+      _selectedCategoryId = null;
+      _selectedFilterCategory = null;
+      _priceRange = 100;
+      _freeEventsOnly = false;
+      _startDate = null;
+      _endDate = null;
+    });
+    _filterEvents(_searchController.text);
   }
 
   @override
@@ -410,19 +459,46 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppConstants.defaultPadding,
                 ),
-                itemCount: _categories!.length,
+                itemCount: _categories!.length + 1,
                 itemBuilder: (context, index) {
-                  final category = _categories![index];
+                  if (index == 0) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: InkWell(
+                        onTap: () => _onCategorySelected(null),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _selectedCategoryId == null
+                                ? Theme.of(context).colorScheme.primary
+                                : Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'All',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: _selectedCategoryId == null
+                                  ? Theme.of(context).colorScheme.onPrimary
+                                  : Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  final category = _categories![index - 1];
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: InkWell(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          AppRouter.searchResults,
-                          arguments: {'categoryId': category.id},
-                        );
-                      },
+                      onTap: () => _onCategorySelected(category.id),
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -430,14 +506,21 @@ class _HomeScreenState extends State<HomeScreen> {
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest,
+                          color: _selectedCategoryId == category.id
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           category.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: _selectedCategoryId == category.id
+                                ? Theme.of(context).colorScheme.onPrimary
+                                : Theme.of(context).colorScheme.onSurface,
+                          ),
                         ),
                       ),
                     ),
@@ -779,17 +862,28 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: widget.categories.map((category) {
-              return ChoiceChip(
-                label: Text(category.name),
-                selected: _selectedCategory == category.name,
+            children: [
+              ChoiceChip(
+                label: const Text('All'),
+                selected: _selectedCategory == null,
                 onSelected: (selected) {
                   setState(() {
-                    _selectedCategory = selected ? category.name : null;
+                    _selectedCategory = null;
                   });
                 },
-              );
-            }).toList(),
+              ),
+              ...widget.categories.map((category) {
+                return ChoiceChip(
+                  label: Text(category.name),
+                  selected: _selectedCategory == category.name,
+                  onSelected: (selected) {
+                    setState(() {
+                      _selectedCategory = selected ? category.name : null;
+                    });
+                  },
+                );
+              }).toList(),
+            ],
           ),
           const SizedBox(height: 16),
           const Text('Price Range',
