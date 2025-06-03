@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import '../../../core/config/app_router.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../data/models/user_model.dart';
-import '../../../data/repositories/mock_user_repository.dart';
+import '../../../data/models/category_model.dart';
+import '../../../data/services/subscription_service.dart';
 import '../../widgets/common_widgets.dart';
 
 class SubscriptionManagementScreen extends StatefulWidget {
@@ -16,28 +17,24 @@ class SubscriptionManagementScreen extends StatefulWidget {
 
 class _SubscriptionManagementScreenState
     extends State<SubscriptionManagementScreen> {
-  final MockUserRepository _userRepository = MockUserRepository();
+  final SubscriptionService _subscriptionService = SubscriptionService();
   final TextEditingController _promoterSearchController =
       TextEditingController();
   final TextEditingController _categorySearchController =
       TextEditingController();
 
   List<UserModel> _followedPromoters = [];
-  bool _isLoading = true;
-  String? _error;
-
-  final List<String> _followedCategories = [
-    'Technology',
-    'Music',
-    'Art',
-    'Sports',
-    'Business',
-  ];
+  List<CategoryModel> _subscribedCategories = [];
+  bool _isLoadingPromoters = true;
+  bool _isLoadingCategories = true;
+  String? _promotersError;
+  String? _categoriesError;
 
   @override
   void initState() {
     super.initState();
     _loadFollowedPromoters();
+    _loadSubscribedCategories();
   }
 
   @override
@@ -49,33 +46,50 @@ class _SubscriptionManagementScreenState
 
   Future<void> _loadFollowedPromoters() async {
     setState(() {
-      _isLoading = true;
-      _error = null;
+      _isLoadingPromoters = true;
+      _promotersError = null;
     });
 
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final currentUser = authProvider.currentUser;
-
-      if (currentUser == null) {
-        throw Exception('You must be logged in to view subscriptions');
-      }
-
-      final followedPromoters = await _userRepository.getFollowedPromoters(
-        currentUser.id,
-      );
+      final followedPromoters =
+          await _subscriptionService.getFollowedPromoters();
 
       if (mounted) {
         setState(() {
           _followedPromoters = followedPromoters;
-          _isLoading = false;
+          _isLoadingPromoters = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
-          _isLoading = false;
+          _promotersError = e.toString();
+          _isLoadingPromoters = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadSubscribedCategories() async {
+    setState(() {
+      _isLoadingCategories = true;
+      _categoriesError = null;
+    });
+
+    try {
+      final subscribedCategories =
+          await _subscriptionService.getSubscribedCategories();
+      if (mounted) {
+        setState(() {
+          _subscribedCategories = subscribedCategories;
+          _isLoadingCategories = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _categoriesError = e.toString();
+          _isLoadingCategories = false;
         });
       }
     }
@@ -83,19 +97,9 @@ class _SubscriptionManagementScreenState
 
   Future<void> _unfollowPromoter(UserModel promoter) async {
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final currentUser = authProvider.currentUser;
+      await _subscriptionService.unfollowPromoter(promoter.id.toString());
 
-      if (currentUser == null) {
-        return;
-      }
-
-      final success = await _userRepository.unfollowPromoter(
-        currentUser.id,
-        promoter.id,
-      );
-
-      if (success && mounted) {
+      if (mounted) {
         setState(() {
           _followedPromoters.removeWhere((p) => p.id == promoter.id);
         });
@@ -103,6 +107,33 @@ class _SubscriptionManagementScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Unfollowed ${promoter.name}'),
+            backgroundColor: Colors.grey,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _unsubscribeFromCategory(CategoryModel category) async {
+    try {
+      await _subscriptionService
+          .unsubscribeFromCategory(category.id.toString());
+      if (mounted) {
+        setState(() {
+          _subscribedCategories.removeWhere((c) => c.id == category.id);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Unsubscribed from ${category.name}'),
             backgroundColor: Colors.grey,
           ),
         );
@@ -138,13 +169,13 @@ class _SubscriptionManagementScreenState
   }
 
   Widget _buildPromotersTab() {
-    if (_isLoading) {
+    if (_isLoadingPromoters) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_error != null) {
+    if (_promotersError != null) {
       return ErrorStateWidget(
-        message: _error!,
+        message: _promotersError!,
         onRetry: _loadFollowedPromoters,
       );
     }
@@ -155,6 +186,14 @@ class _SubscriptionManagementScreenState
         icon: Icons.people_outline,
       );
     }
+
+    final filteredPromoters = _followedPromoters.where((promoter) {
+      final searchQuery = _promoterSearchController.text.toLowerCase();
+      if (searchQuery.isEmpty) return true;
+      return promoter.name.toLowerCase().contains(searchQuery) ||
+          (promoter.promoterDetail?.companyName?.toLowerCase() ?? '')
+              .contains(searchQuery);
+    }).toList();
 
     return Column(
       children: [
@@ -169,29 +208,23 @@ class _SubscriptionManagementScreenState
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
+            onChanged: (value) => setState(() {}),
           ),
         ),
         Expanded(
           child: ListView.builder(
-            itemCount: _followedPromoters.length,
+            itemCount: filteredPromoters.length,
             itemBuilder: (context, index) {
-              final promoter = _followedPromoters[index];
-              final searchQuery = _promoterSearchController.text.toLowerCase();
-
-              if (searchQuery.isNotEmpty &&
-                  !promoter.name.toLowerCase().contains(searchQuery) &&
-                  !(promoter.promoterDetail?.companyName?.toLowerCase() ?? '')
-                      .contains(searchQuery)) {
-                return const SizedBox.shrink();
-              }
-
+              final promoter = filteredPromoters[index];
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundImage: promoter.profilePicture != null
+                  backgroundImage: promoter.profilePicture != null &&
+                          promoter.profilePicture!.isNotEmpty
                       ? NetworkImage(promoter.profilePicture!)
                       : null,
-                  child: promoter.profilePicture == null
-                      ? Text(promoter.name[0])
+                  child: promoter.profilePicture == null ||
+                          promoter.profilePicture!.isEmpty
+                      ? Text(promoter.name.isNotEmpty ? promoter.name[0] : 'P')
                       : null,
                 ),
                 title: Text(
@@ -206,7 +239,9 @@ class _SubscriptionManagementScreenState
                     IconButton(
                       icon: const Icon(Icons.notifications_active),
                       onPressed: () {
-                        // TODO: Toggle notifications for this promoter
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Notification toggle TBD')));
                       },
                     ),
                     IconButton(
@@ -233,6 +268,30 @@ class _SubscriptionManagementScreenState
   }
 
   Widget _buildCategoriesTab() {
+    if (_isLoadingCategories) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_categoriesError != null) {
+      return ErrorStateWidget(
+        message: _categoriesError!,
+        onRetry: _loadSubscribedCategories,
+      );
+    }
+
+    if (_subscribedCategories.isEmpty) {
+      return const EmptyStateWidget(
+        message: 'You are not subscribed to any categories yet',
+        icon: Icons.category_outlined,
+      );
+    }
+
+    final filteredCategories = _subscribedCategories.where((category) {
+      final searchQuery = _categorySearchController.text.toLowerCase();
+      if (searchQuery.isEmpty) return true;
+      return category.name.toLowerCase().contains(searchQuery);
+    }).toList();
+
     return Column(
       children: [
         Padding(
@@ -246,34 +305,32 @@ class _SubscriptionManagementScreenState
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
+            onChanged: (value) => setState(() {}),
           ),
         ),
         Expanded(
           child: ListView.builder(
-            itemCount: _followedCategories.length,
+            itemCount: filteredCategories.length,
             itemBuilder: (context, index) {
-              final category = _followedCategories[index];
-              final searchQuery = _categorySearchController.text.toLowerCase();
-
-              if (searchQuery.isNotEmpty &&
-                  !category.toLowerCase().contains(searchQuery)) {
-                return const SizedBox.shrink();
-              }
-
+              final category = filteredCategories[index];
               return ListTile(
                 leading: Icon(
-                  _getCategoryIcon(category),
+                  _getCategoryIcon(category.name),
                   color: Theme.of(context).primaryColor,
                 ),
-                title: Text(category),
-                subtitle: Text('${index + 3} upcoming events'),
+                title: Text(category.name),
+                subtitle: Text(category.description.isNotEmpty
+                    ? category.description
+                    : '${index + 3} upcoming events'),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
                       icon: const Icon(Icons.notifications_active),
                       onPressed: () {
-                        // TODO: Toggle notifications for this category
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Notification toggle TBD')));
                       },
                     ),
                     IconButton(
@@ -285,7 +342,9 @@ class _SubscriptionManagementScreenState
                   ],
                 ),
                 onTap: () {
-                  // TODO: Navigate to category events
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content:
+                          Text('Navigate to ${category.name} events TBD')));
                 },
               );
             },
@@ -295,8 +354,8 @@ class _SubscriptionManagementScreenState
     );
   }
 
-  IconData _getCategoryIcon(String category) {
-    switch (category.toLowerCase()) {
+  IconData _getCategoryIcon(String categoryName) {
+    switch (categoryName.toLowerCase()) {
       case 'technology':
         return Icons.computer;
       case 'music':
@@ -304,17 +363,18 @@ class _SubscriptionManagementScreenState
       case 'art':
         return Icons.palette;
       case 'sports':
-        return Icons.sports;
+        return Icons.sports_soccer;
       case 'business':
-        return Icons.business;
+        return Icons.business_center;
       default:
         return Icons.category;
     }
   }
 
   void _showUnsubscribeDialog(dynamic item, {bool isCategory = false}) {
-    final name =
-        isCategory ? item : (item.promoterDetail?.companyName ?? item.name);
+    final name = isCategory
+        ? (item as CategoryModel).name
+        : ((item as UserModel).promoterDetail?.companyName ?? item.name);
 
     showDialog(
       context: context,
@@ -334,17 +394,9 @@ class _SubscriptionManagementScreenState
             onPressed: () {
               Navigator.pop(context);
               if (isCategory) {
-                setState(() {
-                  _followedCategories.remove(item);
-                });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Unsubscribed from $name'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
+                _unsubscribeFromCategory(item as CategoryModel);
               } else {
-                _unfollowPromoter(item);
+                _unfollowPromoter(item as UserModel);
               }
             },
             child: const Text(
