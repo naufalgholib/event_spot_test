@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/event_model.dart';
 import '../../../data/models/user_model.dart';
-import '../../../data/repositories/mock_event_repository.dart';
 import '../../../core/config/app_router.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../data/services/event_service.dart';

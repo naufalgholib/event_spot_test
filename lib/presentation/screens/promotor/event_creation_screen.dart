@@ -45,7 +45,7 @@ class _EventCreationScreenState extends State<EventCreationScreen> {
   final List<dynamic> _eventImages = [];
 
   // Map controller
-  Completer<GoogleMapController> _mapControllerCompleter = Completer();
+  final Completer<GoogleMapController> _mapControllerCompleter = Completer();
   Set<Marker> _markers = {};
   LatLng? _selectedLocation;
 

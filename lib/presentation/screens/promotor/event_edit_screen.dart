@@ -23,7 +23,7 @@ class EventEditScreen extends StatefulWidget {
 class _EventEditScreenState extends State<EventEditScreen> {
   final EventService _eventService = EventService();
   final CategoryService _categoryService = CategoryService();
-  Completer<GoogleMapController> _mapControllerCompleter = Completer();
+  final Completer<GoogleMapController> _mapControllerCompleter = Completer();
 
   // Form controllers
   final TextEditingController _titleController = TextEditingController();

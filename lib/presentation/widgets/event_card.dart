@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/config/app_constants.dart';
 import '../../data/models/event_model.dart';
 import '../../data/services/event_service.dart';
