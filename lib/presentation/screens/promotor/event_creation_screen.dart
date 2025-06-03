@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -133,7 +135,7 @@ class _EventCreationScreenState extends State<EventCreationScreen> {
     return DateFormat('MMM dd, yyyy • h:mm a').format(dateTime);
   }
 
-  void _generateAIDescription() {
+  Future<void> _generateAIDescription() async {
     if (_titleController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -146,37 +148,94 @@ class _EventCreationScreenState extends State<EventCreationScreen> {
 
     setState(() {
       _isGeneratingDescription = true;
+      _descriptionController.text = '';
     });
 
-    // Simulate AI generation with a delay
-    Future.delayed(const Duration(seconds: 2), () {
-      final eventTitle = _titleController.text;
-      final category = _categories
-          .firstWhere(
-            (cat) => cat.id == _selectedCategoryId,
-            orElse: () => CategoryModel(
-              id: 0,
-              name: 'Unknown',
-              description: '',
-              icon: '',
+    final eventTitle = _titleController.text;
+    final category = _categories
+        .firstWhere(
+          (cat) => cat.id == _selectedCategoryId,
+          orElse: () => CategoryModel(
+            id: 0,
+            name: 'Unknown',
+            description: '',
+            icon: '',
+          ),
+        )
+        .name;
+
+    // IMPORTANT: Replace with your actual Gemini API key
+    const String geminiApiKey = String.fromEnvironment('GEMINI_API_KEY',
+        defaultValue: 'MISSING_GEMINI_API_KEY'); // Changed variable name
+    final String apiUrl =
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$geminiApiKey'; // Updated API URL and key placement
+
+    final prompt =
+        "Tolong buatkan deskripsi yang unik dan menarik untuk event \"$eventTitle\" dengan kategori event \"$category\". Nantinya deskripsi event ini akan dipakai untuk di posting di aplikasi event spotter, dimana orang orang bisa melihat event ini dan registrasi serta menghadiri event ini. Text nya jangan terlalu Panjang karna akan dimuat di aplikasi mobile juga. Respon tidak usah menggunakan pembuka seperti Tentu, berikut xxx ataupun penutup seperti Semoga deskripsi ini membantu! langsung saja ke deskripsinya. Kurang lebih 50 kata";
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {
+          'Content-Type': 'application/json',
+          // Gemini API key is in the URL, so no Authorization header needed here
+        },
+        body: jsonEncode({
+          'contents': [
+            {
+              'parts': [
+                {'text': prompt}
+              ]
+            }
+          ]
+          // Gemini API specific parameters might be added here if needed, e.g., generationConfig
+          // 'generationConfig': {
+          //   'temperature': 0.7,
+          //   'maxOutputTokens': 256,
+          // }
+        }),
+      );
+
+      if (mounted) {
+        if (response.statusCode == 200) {
+          final responseBody = jsonDecode(response.body);
+          // Adjusted response parsing for Gemini API
+          final aiDescription = responseBody['candidates'][0]['content']
+                  ['parts'][0]['text']
+              .toString()
+              .trim();
+          setState(() {
+            _descriptionController.text = aiDescription;
+            _isUsingAI = true;
+          });
+        } else {
+          final errorBody = jsonDecode(response.body);
+          final errorMessage = errorBody['error']?['message'] ??
+              'Failed to generate description. Status code: ${response.statusCode}';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('AI Error: $errorMessage'),
+              backgroundColor: Colors.red,
             ),
-          )
-          .name;
-
-      final aiDescription = '''
-Join us for an amazing $eventTitle event! This ${category.toLowerCase()} event will be an unforgettable experience for all attendees.
-
-Our carefully curated program includes top-notch activities and experiences designed to engage and inspire participants. Whether you're a seasoned enthusiast or new to the world of ${category.toLowerCase()}, this event offers something for everyone.
-
-Don't miss this opportunity to connect with like-minded individuals, learn from experts, and create lasting memories. Secure your spot today!
-''';
-
-      setState(() {
-        _descriptionController.text = aiDescription;
-        _isGeneratingDescription = false;
-        _isUsingAI = true;
-      });
-    });
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error connecting to AI service: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGeneratingDescription = false;
+        });
+      }
+    }
   }
 
   Future<void> _addImage() async {
