@@ -4,6 +4,8 @@ import 'package:event_spot/core/config/app_router.dart';
 import 'package:provider/provider.dart';
 import 'package:event_spot/core/providers/auth_provider.dart';
 import 'package:event_spot/data/models/user_model.dart';
+import 'package:event_spot/data/services/admin_dashboard_service.dart';
+import 'package:event_spot/data/models/admin_dashboard_model.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({Key? key}) : super(key: key);
@@ -13,13 +15,36 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
-  // Sample data for dashboard stats
-  final Map<String, int> _dashboardStats = {
-    'Users': 1245,
-    'Events': 72,
-    'Promoters': 38,
-    'Categories': 12,
-  };
+  final AdminDashboardService _dashboardService = AdminDashboardService();
+  bool _isLoading = true;
+  String? _errorMessage;
+  AdminDashboardModel? _dashboardData;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDashboardData();
+  }
+
+  Future<void> _fetchDashboardData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final data = await _dashboardService.getDashboardData();
+      setState(() {
+        _dashboardData = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,24 +55,68 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       appBar: AppBar(
         title: const Text('Admin Dashboard'),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _fetchDashboardData,
+          ),
+        ],
       ),
       drawer: _buildDrawer(currentUser),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildWelcomeSection(),
-              const SizedBox(height: 24),
-              _buildStatsGrid(),
-              const SizedBox(height: 32),
-              _buildNavigationSection(),
-              const SizedBox(height: 32),
-              _buildRecentActivitySection(),
-            ],
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _errorMessage != null
+                ? _buildErrorView()
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildWelcomeSection(),
+                        const SizedBox(height: 24),
+                        _buildStatsGrid(),
+                        const SizedBox(height: 32),
+                        _buildNavigationSection(),
+                        const SizedBox(height: 32),
+                        _buildRecentActivitySection(),
+                      ],
+                    ),
+                  ),
+      ),
+    );
+  }
+
+  Widget _buildErrorView() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.error_outline,
+            color: Colors.red,
+            size: 60,
           ),
-        ),
+          const SizedBox(height: 16),
+          Text(
+            'Error loading dashboard data',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              _errorMessage ?? 'Unknown error',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: _fetchDashboardData,
+            child: const Text('Retry'),
+          ),
+        ],
       ),
     );
   }
@@ -228,6 +297,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildStatsGrid() {
+    // Use real data from the API
+    final Map<String, int> dashboardStats = {
+      'Users': _dashboardData?.totalUsers ?? 0,
+      'Events': _dashboardData?.totalEvents ?? 0,
+      'Tags': _dashboardData?.totalTags ?? 0,
+      'Categories': _dashboardData?.totalCategories ?? 0,
+    };
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -237,9 +314,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         mainAxisSpacing: 12,
         childAspectRatio: 1.3,
       ),
-      itemCount: _dashboardStats.length,
+      itemCount: dashboardStats.length,
       itemBuilder: (context, index) {
-        final entry = _dashboardStats.entries.elementAt(index);
+        final entry = dashboardStats.entries.elementAt(index);
         return _buildStatCard(entry.key, entry.value);
       },
     );
@@ -386,29 +463,41 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildRecentActivitySection() {
-    // Sample recent activities
-    final List<Map<String, dynamic>> recentActivities = [
-      {
-        'action': 'New user registration',
-        'time': '10 minutes ago',
-        'icon': Icons.person_add,
-      },
-      {
-        'action': 'Event reported',
-        'time': '1 hour ago',
-        'icon': Icons.report_problem,
-      },
-      {
-        'action': 'Promoter verification request',
-        'time': '3 hours ago',
-        'icon': Icons.verified_user,
-      },
-      {
-        'action': 'Category added',
-        'time': '5 hours ago',
-        'icon': Icons.category,
-      },
-    ];
+    // Use real data from API if available, otherwise use sample data
+    final List<Map<String, dynamic>> recentActivities =
+        _dashboardData?.recentEvents.isNotEmpty == true
+            ? _dashboardData!.recentEvents.map((event) {
+                // Convert API event data to activity format
+                // This will need to be adjusted based on the actual API response format
+                return {
+                  'action': event['title'] ?? 'Event action',
+                  'time': event['created_at'] ?? 'Recently',
+                  'icon': Icons.event,
+                };
+              }).toList()
+            : [
+                // Fallback sample data
+                {
+                  'action': 'New user registration',
+                  'time': '10 minutes ago',
+                  'icon': Icons.person_add,
+                },
+                {
+                  'action': 'Event reported',
+                  'time': '1 hour ago',
+                  'icon': Icons.report_problem,
+                },
+                {
+                  'action': 'Promoter verification request',
+                  'time': '3 hours ago',
+                  'icon': Icons.verified_user,
+                },
+                {
+                  'action': 'Category added',
+                  'time': '5 hours ago',
+                  'icon': Icons.category,
+                },
+              ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -445,12 +534,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 title: Text(
                   activity['action'],
-                  textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 14),
                 ),
                 subtitle: Text(
                   activity['time'],
-                  textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 12),
                 ),
               );
