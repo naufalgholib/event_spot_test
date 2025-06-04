@@ -253,7 +253,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Member since ${DateFormat('MMM yyyy').format(user.createdAt)}',
+                      'Member since ${user.createdAt != null ? DateFormat('MMM yyyy').format(user.createdAt!) : 'N/A'}',
                       style: TextStyle(
                         fontSize: 12,
                         color: theme.colorScheme.onSurfaceVariant,

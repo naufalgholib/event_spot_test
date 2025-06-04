@@ -7,10 +7,10 @@ class UserModel {
   final String? bio;
   final String userType; // 'admin', 'user', 'promotor'
   final bool isVerified;
-  final bool isActive;
+  final bool? isActive;
   final DateTime? emailVerifiedAt;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   // Promotor specific details (populated if userType is 'promotor')
   final PromoterDetailModel? promoterDetail;
@@ -24,34 +24,49 @@ class UserModel {
     this.bio,
     required this.userType,
     this.isVerified = false,
-    this.isActive = true,
+    this.isActive,
     this.emailVerifiedAt,
-    required this.createdAt,
-    required this.updatedAt,
+    this.createdAt,
+    this.updatedAt,
     this.promoterDetail,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    // Parse dates safely
+    DateTime? parseDate(dynamic value) {
+      if (value == null) return null;
+      try {
+        return DateTime.parse(value.toString());
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // Parse boolean values safely
+    bool parseBool(dynamic value) {
+      if (value == null) return false;
+      if (value is bool) return value;
+      if (value is int) return value == 1;
+      if (value is String) return value.toLowerCase() == 'true' || value == '1';
+      return false;
+    }
+
     return UserModel(
-      id: json['id'],
-      name: json['name'],
-      email: json['email'],
+      id: json['id'] is String ? int.parse(json['id']) : json['id'],
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
       phoneNumber: json['phone_number'],
       profilePicture: json['profile_picture'],
       bio: json['bio'],
-      userType: json['user_type'],
-      isVerified: json['is_verified'] == 1,
-      isActive: json['is_active'] == 1,
-      emailVerifiedAt:
-          json['email_verified_at'] != null
-              ? DateTime.parse(json['email_verified_at'])
-              : null,
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: DateTime.parse(json['updated_at']),
-      promoterDetail:
-          json['promoter_detail'] != null
-              ? PromoterDetailModel.fromJson(json['promoter_detail'])
-              : null,
+      userType: json['user_type'] ?? 'user',
+      isVerified: parseBool(json['is_verified']),
+      isActive: json['is_active'] != null ? parseBool(json['is_active']) : null,
+      emailVerifiedAt: parseDate(json['email_verified_at']),
+      createdAt: parseDate(json['created_at']),
+      updatedAt: parseDate(json['updated_at']),
+      promoterDetail: json['promoter_detail'] != null
+          ? PromoterDetailModel.fromJson(json['promoter_detail'])
+          : null,
     );
   }
 
@@ -65,10 +80,14 @@ class UserModel {
       'bio': bio,
       'user_type': userType,
       'is_verified': isVerified ? 1 : 0,
-      'is_active': isActive ? 1 : 0,
+      'is_active': isActive != null
+          ? isActive!
+              ? 1
+              : 0
+          : null,
       'email_verified_at': emailVerifiedAt?.toIso8601String(),
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
+      'created_at': createdAt?.toIso8601String(),
+      'updated_at': updatedAt?.toIso8601String(),
     };
 
     if (promoterDetail != null) {
@@ -150,12 +169,11 @@ class PromoterDetailModel {
       companyLogo: json['company_logo'],
       description: json['description'],
       website: json['website'],
-      socialMedia:
-          json['social_media'] != null
-              ? json['social_media'] is String
-                  ? Map<String, dynamic>.from(json['social_media'])
-                  : json['social_media']
-              : null,
+      socialMedia: json['social_media'] != null
+          ? json['social_media'] is String
+              ? Map<String, dynamic>.from(json['social_media'])
+              : json['social_media']
+          : null,
       verificationStatus: json['verification_status'],
       verificationDocument: json['verification_document'],
       createdAt: DateTime.parse(json['created_at']),

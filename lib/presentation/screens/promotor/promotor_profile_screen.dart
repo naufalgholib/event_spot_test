@@ -436,7 +436,9 @@ class _PromotorProfileScreenState extends State<PromotorProfileScreen> {
           _buildInfoRow(
             icon: Icons.calendar_today,
             title: 'Member Since',
-            value: DateFormat('MMMM yyyy').format(user.createdAt),
+            value: user.createdAt != null
+                ? DateFormat('MMMM yyyy').format(user.createdAt!)
+                : 'N/A',
           ),
           _buildInfoRow(
             icon: Icons.verified_user,
