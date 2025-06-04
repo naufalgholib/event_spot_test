@@ -28,6 +28,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   List<EventModel>? _upcomingEvents;
   List<EventModel>? _pastEvents;
   List<EventModel>? _bookmarkedEvents;
+  UserModel? _user; // Add this for API user data
   bool _isLoading = true;
   String? _error;
 
@@ -52,10 +53,32 @@ class _UserProfileScreenState extends State<UserProfileScreen>
 
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final user = authProvider.currentUser;
+      final currentUser = authProvider.currentUser;
 
-      if (user == null) {
+      if (currentUser == null) {
         throw Exception('User not found. Please log in.');
+      }
+
+      // Load user profile from API
+      try {
+        final apiUser = await _userService.getUserProfile();
+        if (apiUser != null) {
+          setState(() {
+            _user = apiUser;
+          });
+          // Update AuthProvider with fresh data
+          authProvider.updateUser(apiUser);
+        } else {
+          // Fallback to current user if API fails
+          setState(() {
+            _user = currentUser;
+          });
+        }
+      } catch (e) {
+        print('Failed to load user profile from API: $e');
+        setState(() {
+          _user = currentUser;
+        });
       }
 
       // Load upcoming events
@@ -65,7 +88,6 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           _upcomingEvents = upcoming;
         });
       } catch (e) {
-        // If error is about no events, just set empty list
         if (e.toString().contains('Failed to load upcoming events')) {
           setState(() {
             _upcomingEvents = [];
@@ -82,7 +104,6 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           _pastEvents = past;
         });
       } catch (e) {
-        // If error is about no events, just set empty list
         if (e.toString().contains('Failed to load event history')) {
           setState(() {
             _pastEvents = [];
@@ -99,7 +120,6 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           _bookmarkedEvents = bookmarked;
         });
       } catch (e) {
-        // If error is about no events, just set empty list
         if (e.toString().contains('Failed to load bookmarked events')) {
           setState(() {
             _bookmarkedEvents = [];
@@ -129,7 +149,12 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   }
 
   void _editProfile() {
-    Navigator.pushNamed(context, AppRouter.editProfile);
+    Navigator.pushNamed(context, AppRouter.editProfile).then((result) {
+      // Refresh profile data after editing
+      if (result == true) {
+        _loadData();
+      }
+    });
   }
 
   void _openSettings() {
@@ -138,8 +163,8 @@ class _UserProfileScreenState extends State<UserProfileScreen>
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final user = authProvider.currentUser;
+    // Use API user data if available, otherwise fallback to AuthProvider
+    final user = _user ?? Provider.of<AuthProvider>(context).currentUser;
 
     return Scaffold(
       appBar: AppBar(
@@ -162,7 +187,10 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           ? const Center(child: CircularProgressIndicator())
           : _error != null
               ? ErrorStateWidget(message: _error!, onRetry: _loadData)
-              : _buildContent(user),
+              : RefreshIndicator(
+                  onRefresh: _loadData,
+                  child: _buildContent(user),
+                ),
     );
   }
 
@@ -211,21 +239,27 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Profile Image
+              // Profile Image with better error handling
               CircleAvatar(
                 radius: 40,
                 backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-                child: user.profilePicture != null
+                child: user.profilePicture != null && user.profilePicture!.isNotEmpty
                     ? ClipOval(
                         child: CachedNetworkImage(
                           imageUrl: user.profilePicture!,
                           width: 80,
                           height: 80,
                           fit: BoxFit.cover,
-                          placeholder: (context, url) =>
-                              const CircularProgressIndicator(),
-                          errorWidget: (context, url, error) =>
-                              const Icon(Icons.person, size: 40),
+                          placeholder: (context, url) => Container(
+                            width: 80,
+                            height: 80,
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.person, size: 40),
+                          ),
+                          errorWidget: (context, url, error) {
+                            print('Error loading profile image: $error');
+                            return const Icon(Icons.person, size: 40);
+                          },
                         ),
                       )
                     : const Icon(Icons.person, size: 40),
@@ -252,6 +286,19 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                       ),
                     ),
                     const SizedBox(height: 4),
+                    
+                    // Show phone number if available
+                    if (user.phoneNumber != null && user.phoneNumber!.isNotEmpty) ...[
+                      Text(
+                        user.phoneNumber!,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                    ],
+                    
                     Text(
                       'Member since ${user.createdAt != null ? DateFormat('MMM yyyy').format(user.createdAt!) : 'N/A'}',
                       style: TextStyle(
@@ -259,6 +306,21 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
+                    
+                    // Show bio if available
+                    if (user.bio != null && user.bio!.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        user.bio!,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontStyle: FontStyle.italic,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -337,6 +399,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
               onPressed: () {
                 Navigator.pushNamed(context, AppRouter.home);
               },
+              icon: const Icon(Icons.explore),
               label: const Text('Browse Events'),
             ),
           ],

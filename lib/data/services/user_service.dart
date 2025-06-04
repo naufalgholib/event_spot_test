@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../models/user_model.dart';
 import 'auth_token_service.dart';
@@ -6,6 +7,16 @@ import '../../core/config/app_constants.dart';
 
 class UserService {
   final _tokenService = AuthTokenService();
+
+  // GET HEADERS - Non-static method
+  Future<Map<String, String>> _getHeaders() async {
+    final token = await _tokenService.getToken();
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
 
   Future<UserModel?> getCurrentUser() async {
     try {
@@ -27,6 +38,33 @@ class UserService {
       }
     } catch (e) {
       throw Exception('Error: $e');
+    }
+  }
+
+  // ADD METHOD getUserProfile yang hilang
+  Future<UserModel?> getUserProfile() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('${AppConstants.baseUrl}/user/profile/details'),
+        headers: headers,
+      );
+
+      print('Profile response: ${response.statusCode}');
+      print('Profile body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['data'] != null) {
+          return UserModel.fromJson(data['data']);
+        }
+      } else if (response.statusCode == 401) {
+        throw Exception('Authentication failed. Please login again.');
+      }
+      return null;
+    } catch (e) {
+      print('Error getting profile: $e');
+      rethrow;
     }
   }
 
@@ -159,6 +197,97 @@ class UserService {
       }
     } finally {
       await _tokenService.clearToken();
+    }
+  }
+
+  // UPDATE PROFILE - Non-static method
+  Future<bool> updateProfile(UserModel user) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.put(
+        Uri.parse('${AppConstants.baseUrl}/user/profile/edit'),
+        headers: headers,
+        body: jsonEncode(user.toJson()),
+      );
+
+      print('Update response: ${response.statusCode}');
+      print('Update body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['success'] ?? false;
+      }
+      return false;
+    } catch (e) {
+      print('Error updating profile: $e');
+      return false;
+    }
+  }
+
+  // UPDATE PROFILE PICTURE - Non-static method
+  Future<String?> updateProfilePicture(File imageFile) async {
+    try {
+      final token = await _tokenService.getToken();
+      if (token == null) {
+        throw Exception('Authentication token not found');
+      }
+
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('${AppConstants.baseUrl}/user/profile/profile-picture'),
+      );
+      
+      request.headers.addAll({
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      });
+
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'profile_picture',
+          imageFile.path,
+        ),
+      );
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      print('Image upload response: ${response.statusCode}');
+      print('Image upload body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success']) {
+          return data['data']['profile_picture'];
+        }
+      }
+      return null;
+    } catch (e) {
+      print('Error updating profile picture: $e');
+      return null;
+    }
+  }
+
+  // DELETE PROFILE PICTURE - Non-static method
+  Future<bool> deleteProfilePicture() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.delete(
+        Uri.parse('${AppConstants.baseUrl}/user/profile/profile-picture'),
+        headers: headers,
+      );
+
+      print('Delete image response: ${response.statusCode}');
+      print('Delete image body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['success'] ?? false;
+      }
+      return false;
+    } catch (e) {
+      print('Error deleting profile picture: $e');
+      return false;
     }
   }
 }
