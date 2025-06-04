@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'edit_profile_screen.dart';
 
 class UserSettingsScreen extends StatefulWidget {
   const UserSettingsScreen({super.key});
@@ -30,7 +31,12 @@ class _UserSettingsScreenState extends State<UserSettingsScreen> {
               'Edit Profile',
               Icons.person,
               onTap: () {
-                // TODO: Navigate to profile edit screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const EditProfileScreen(),
+                  ),
+                );
               },
             ),
             _buildListTile(
