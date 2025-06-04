@@ -167,7 +167,7 @@ class _EventCreationScreenState extends State<EventCreationScreen> {
     // IMPORTANT: Replace with your actual Gemini API key
     const String geminiApiKey = String.fromEnvironment('GEMINI_API_KEY',
         defaultValue: 'MISSING_GEMINI_API_KEY'); // Changed variable name
-    final String apiUrl =
+    const String apiUrl =
         'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$geminiApiKey'; // Updated API URL and key placement
 
     final prompt =

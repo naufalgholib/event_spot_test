@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../../core/config/app_router.dart';
-import '../../../core/providers/auth_provider.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/models/category_model.dart';
 import '../../../data/services/subscription_service.dart';
